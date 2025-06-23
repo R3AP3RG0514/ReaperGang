@@ -1,0 +1,86 @@
+---
+title: New `waitForEvent` API landed in Workflows
+description: Use the new `waitForEvent` API in Workflows to wait for approvals, additional data and/or webhooks from external systems.
+products:
+  - workflows
+date: 2025-02-18T14:00:00Z
+---
+
+import { Render, TypeScriptExample } from "~/components";
+
+[Workflows](/workflows/) now allows your workflows to wait for events through the [`waitForEvent`](/workflows/build/events-and-parameters/) API, enabling human-in-loop, approval-driven and/or webhook-reactive workflows and AI agents that can act on external events as they execute.
+
+Calling `step.waitForEvent` is similar to calling any other step in your Workflow: give the step a name, set an optional timeout, and return the event as state:
+
+<TypeScriptExample filename="workflow.ts">
+```ts
+// Within your Workflow definition
+let event = await step.waitForEvent("unique event name", { timeout: "1 day" })
+```
+</TypeScriptExample>
+
+You can then pass an event to a specific Workflow instance by calling `sendEvent`:
+
+<TypeScriptExample filename="index.ts">
+```ts
+// Within a Worker, Queue handler, or Durable Object
+await env.WORKFLOW.get(instanceId).sendEvent("unique event name", eventPayload)
+```
+</TypeScriptExample>
+
+For example, you can build Workflows that can wait for third party webhooks by using `await step.waitForEvent` inside the Workflow and `sendEvent` from the [Workers API](/workflows/build/workers-api/#workflowinstance):
+
+<TypeScriptExample filename="index.ts">
+```ts
+type InboundBillingEvent = {
+	name: string;
+	timestamp: Date;
+	invoiceId: string;
+	amount: number;
+	description: string;
+}
+
+export class MyWorkflow extends WorkflowEntrypoint<Env, Params> {
+  async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
+    let state = step.do("my first step", async () => {
+    	// Code here
+    })
+
+		// Pass an optional type
+    let invoiceEventData = await step.waitForEvent<InboundBillingEvent>("wait for paid invoice", { timeout: "7 days" })
+
+    let res = await step.do("process invoice", await async () => {
+    	// Process the invoiceEventData
+     	// If the payload doesn't work, we can trigger another step.waitForEvent from here too!
+    }
+
+    // Continue on with the workflow
+  }
+}
+
+export default {
+	async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+		let path = new URL(req.url).pathname
+		switch (path) {
+			case "/runInstance":
+				if (req.method === "POST") {
+				let params = new URL(req.url).searchParams
+				let invoiceId = params.get("invoiceId")
+				let instance = await env.WORKFLOW.create({ id: invoiceId })
+
+				return Response.json({ instance_id: instance.id })
+			case "/handleWebhook":
+				if (req.method === "POST") {
+					let instanceId = req.headers.get("x-workflow-invoice-id")
+					let jsonPayload = await req.json()
+					await env.WORKFLOW.get(instanceId).sendEvent("process invoice", jsonPayload)
+					return Response.json({ success: true })
+			default:
+				return Response.json({ error: "Not found" }, { status: 404 })
+		}
+	}
+}
+```
+</TypeScriptExample>
+
+Visit the Workflows [documentation on events and parameters](/workflows/build/events-and-parameters/) to learn more about the new event API.

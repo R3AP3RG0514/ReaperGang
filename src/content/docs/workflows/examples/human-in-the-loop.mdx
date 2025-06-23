@@ -1,0 +1,37 @@
+---
+type: example
+summary: Request approvals and input within a Workflow instance
+tags:
+  - Workflows
+  - Workers AI
+  - Agents
+pcx_content_type: configuration
+title: Human-in-the-loop Agents
+sidebar:
+  order: 10
+description: Request approvals and input within a Workflow instance
+
+---
+
+import { TabItem, Tabs, WranglerConfig } from "~/components"
+
+TODO
+
+<WranglerConfig>
+
+```toml
+name = "cart-invoices"
+main = "src/index.ts"
+compatibility_date = "2024-10-22"
+compatibility_flags = ["nodejs_compat" ]
+
+[[workflows]]
+name = "cart-invoices-workflow"
+binding = "CART_WORKFLOW"
+class_name = "cartInvoicesWorkflow"
+
+[[send_email]]
+name = "SEND_EMAIL"
+```
+
+</WranglerConfig>
