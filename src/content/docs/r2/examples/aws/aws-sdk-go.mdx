@@ -1,0 +1,214 @@
+---
+title: aws-sdk-go
+pcx_content_type: example
+---
+
+import { Render } from "~/components";
+
+<Render file="keys" />
+<br />
+
+This example uses version 2 of the [aws-sdk-go](https://github.com/aws/aws-sdk-go-v2) package. You must pass in the R2 configuration credentials when instantiating your `S3` service client:
+
+:::note[Compatibility]
+Client version `1.73.0` introduced a modification to the default checksum behavior from the client that is currently incompatible with R2 APIs.
+
+To mitigate, users can use `1.72.3` or add the following to their config:
+
+```go
+config.WithRequestChecksumCalculation(2)
+config.WithResponseChecksumValidation(2)
+```
+
+If checksum is needed, R2 supports `SHA-1` and `SHA-256` algorithms.
+:::
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"log"
+)
+
+func main() {
+	var bucketName = "sdk-example"
+	var accountId = "<accountid>"
+	var accessKeyId = "<access_key_id>"
+	var accessKeySecret = "<access_key_secret>"
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyId, accessKeySecret, "")),
+		config.WithRegion("auto"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId))
+	})
+
+	listObjectsOutput, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket: &bucketName,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, object := range listObjectsOutput.Contents {
+		obj, _ := json.MarshalIndent(object, "", "\t")
+		fmt.Println(string(obj))
+	}
+
+	//  {
+	//  	"ChecksumAlgorithm": null,
+	//  	"ETag": "\"eb2b891dc67b81755d2b726d9110af16\"",
+	//  	"Key": "ferriswasm.png",
+	//  	"LastModified": "2022-05-18T17:20:21.67Z",
+	//  	"Owner": null,
+	//  	"Size": 87671,
+	//  	"StorageClass": "STANDARD"
+	//  }
+
+	listBucketsOutput, err := client.ListBuckets(context.TODO(), &s3.ListBucketsInput{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, object := range listBucketsOutput.Buckets {
+		obj, _ := json.MarshalIndent(object, "", "\t")
+		fmt.Println(string(obj))
+	}
+
+	// {
+	// 		"CreationDate": "2022-05-18T17:19:59.645Z",
+	// 		"Name": "sdk-example"
+	// }
+}
+```
+
+### Use SHA-1/SHA-256 checksum algorithms
+
+You can also use SHA-1 and SHA-256 algorithms for checksum.
+
+```go
+package main
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
+	"log"
+	"os"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+)
+
+func calculateSHA256(data []byte) string {
+	hash := sha256.New()
+	hash.Write(data)
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+}
+
+func calculateSHA1(data []byte) string {
+	hash := sha1.New()
+	hash.Write(data)
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+}
+
+func main() {
+	var bucketName = "sdk-example"
+	var accountId = "<accountid>"
+	var accessKeyId = "<access_key_id>"
+	var accessKeySecret = "<access_key_secret>"
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyId, accessKeySecret, "")),
+		config.WithRegion("auto"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId))
+	})
+
+	// Read your object data (example with a file)
+	data, err := os.ReadFile("/path/to/file")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Calcualte SHA1
+	checksumSHA1 := calculateSHA1(data)
+
+	// Create the upload input
+	uploadInputForSHA1 := &s3.PutObjectInput{
+		Bucket:       aws.String(bucketName),
+		Key:          aws.String(objectKey),
+		Body:         bytes.NewReader(data),
+		ChecksumSHA1: aws.String(checksumSHA1),
+	}
+
+	// Upload the object with SHA1 checksum
+	resultSHA1, errSHA1 := client.PutObject(context.TODO(), uploadInputForSHA1)
+	if errSHA1 != nil {
+		log.Fatal(errSHA1)
+	}
+
+	fmt.Printf("Upload successful with SHA1 checksum: %+v\n", resultSHA1)
+
+	// Calculate SHA256
+	checksumSHA256 := calculateSHA256(data)
+
+	// Create the upload input
+	uploadInputForSHA256 := &s3.PutObjectInput{
+		Bucket:         aws.String(bucketName),
+		Key:            aws.String(objectKey),
+		Body:           bytes.NewReader(data),
+		ChecksumSHA256: aws.String(checksumSHA256),
+	}
+
+	// Upload the object with SHA256 checksum
+	resultSHA256, errSHA256 := client.PutObject(context.TODO(), uploadInputForSHA256)
+	if errSHA256 != nil {
+		log.Fatal(errSHA256)
+	}
+
+	fmt.Printf("Upload successful with SHA256 checksum: %+v\n", resultSHA256)
+
+}
+
+```
+
+## Generate presigned URLs
+
+You can also generate presigned links that can be used to temporarily share public write access to a bucket.
+
+```go
+presignClient := s3.NewPresignClient(client)
+
+	presignResult, err := presignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String("example.txt"),
+	})
+
+	if err != nil {
+		panic("Couldn't get presigned URL for PutObject")
+	}
+
+	fmt.Printf("Presigned URL For object: %s\n", presignResult.URL)
+```
