@@ -1,0 +1,58 @@
+---
+pcx_content_type: navigation
+title: Get started
+sidebar:
+  order: 1
+  group:
+    hideIndex: false
+---
+
+import {
+	DirectoryListing,
+	Render,
+	CardGrid,
+	Card,
+	LinkCard,
+} from "~/components";
+
+## What are Cloudflare Workers?
+
+Cloudflare Workers let you deploy and run code on [Cloudflare’s global network of data centers](https://www.cloudflare.com/network/). You can think of each Worker as its own server: it accepts incoming HTTP requests, processes them, and returns a response. Unlike traditional servers, you do not have to manually scale resources up or down — Cloudflare automatically spins up and shuts down Workers as traffic fluctuates, and you pay only for the time your code is actually running rather than for idle or [wall-clock time](https://blog.cloudflare.com/workers-pricing-scale-to-zero/).
+
+## How Workers fit into a modern web stack
+
+In many traditional setups, frontend (HTML, CSS, and JavaScript) and backend logic (APIs, authentication, or data fetching) are deployed separately — sometimes even on different platforms. While some providers allow you to host both your frontend and serverless functions in one place, they typically run these functions in a limited set of regions. With Cloudflare Workers, you deploy your entire application — static assets and dynamic logic — to data centers **worldwide**.
+
+This allows you to manage everything in a single project, without needing to think about regions or how to synchronize deployments. The platform supports [popular frameworks](/workers/frameworks/), so you can keep using your desired framework for your frontend. The key difference is that your server-side code runs alongside your frontend code on Cloudflare’s network. This design minimizes latency on every request, and cuts down the number of moving parts by combining hosting, routing, and server-side execution in one platform.
+
+## When your app needs to persist data
+
+Beyond compute, most applications need a way to store and retrieve data. Cloudflare offers native, cost-effective storage services that run on the same global network as Workers, allowing you to run entire applications in a single platform — without managing central servers. These storage products ([Workers KV](/kv), [R2](/r2), [Durable Objects](/durable-objects/), [D1](/d1/)) integrate directly with Workers via [bindings](/workers/runtime-apis/bindings), so that requests to read or write data can stay on Cloudflare’s internal network. Since Cloudflare runs both the compute (your Worker) and the storage, the Worker doesn’t have to make a round trip over the public Internet to fetch data. To learn which storage product is right for your project, read [our guide](/workers/platform/storage-options/).
+
+## Choose your path to get started
+
+<CardGrid>
+<LinkCard
+	title="CLI"
+	href="/workers/get-started/cli/"
+	description="Follow our getting started guide using our CLI, Wrangler, to deploy your first Worker project."
+/>
+
+<LinkCard
+	title="Dashboard"
+	href="/workers/get-started/dashboard/"
+	description="Quickly create and edit Workers in your browser. Perfect for smaller scripts, rapid prototyping, or when you prefer not to install extra tools locally."
+/>
+
+<LinkCard
+	title="Prompting"
+	href="/workers/get-started/prompting/"
+	description="Use AI tools or large language models (LLMs) by providing a specialized prompt that can generate or refactor Worker code."
+/>
+
+<LinkCard
+	title="Quickstarts"
+	href="/workers/get-started/quickstarts/"
+	description="Start from curated GitHub templates for common scenarios and adapt them to your needs."
+/>
+</CardGrid>
