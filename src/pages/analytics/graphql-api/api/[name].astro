@@ -1,0 +1,107 @@
+---
+import { getCollection } from "astro:content";
+import { compile, type JSONSchema } from "json-schema-to-typescript";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import SchemaViewer from "~/components/models/SchemaViewer.astro";
+import { Code } from "~/components";
+import { LinkButton } from "~/components";
+import { CollapsibleSection } from "~/components/CollapsibleSection";
+import {
+	GraphQLToJSONSchemaBuilder,
+	type Field,
+} from "~/util/graphQLToJsonSchema";
+import { graphQLJSONSchemaToExample } from "~/util/graphQLJSONSchemaToExample";
+
+export const getStaticPaths = async () => {
+	const [schema] = await getCollection("graphql-api");
+	const groups = ["account", "zone", "organization"];
+
+	return groups.flatMap((group) => {
+		const query = schema.data.types.find(
+			(type: { name: string }) => type.name === group,
+		);
+		return (
+			query?.fields
+				.filter((el) => el.name !== `${group}Tag`)
+				.map((field: Field) => {
+					return {
+						params: {
+							name: `${group}.${field.name}`,
+						},
+						props: { query: field },
+					};
+				}) || []
+		);
+	});
+};
+
+const { name } = Astro.params;
+const { query } = Astro.props;
+const [schema] = await getCollection("graphql-api");
+
+const schemaBuilder = new GraphQLToJSONSchemaBuilder(schema.data);
+const completeInputType = schemaBuilder.buildCompleteInputType(
+	(query.args || []) as Field[],
+	"InputType",
+);
+const completeResponseType = schemaBuilder.buildCompleteResponseType(
+	query,
+	"ResponseType",
+);
+
+const typescriptOutput = await compile(
+	completeResponseType as JSONSchema,
+	"Response",
+	{ additionalProperties: false, bannerComment: "" },
+);
+const typescriptInput = await compile(
+	completeInputType as JSONSchema,
+	"Input",
+	{ additionalProperties: false, bannerComment: "" },
+);
+
+const [group, queryName] = name.split(".") as [
+	"account" | "zone" | "organization",
+	string,
+];
+const gqlQuery = graphQLJSONSchemaToExample(
+	`${group}s`,
+	queryName,
+	query.description,
+	completeInputType as JSONSchema,
+	completeResponseType as JSONSchema,
+);
+---
+
+<StarlightPage
+	frontmatter={{ title: "GraphQL API Schema", tableOfContents: false }}
+>
+	<h2>{name.split(".").join(" ")}</h2>
+	<p>{query.description}</p>
+	<div class="mt-4">
+		<CollapsibleSection client:load title="Example GraphQL Query" defaultOpen>
+			<LinkButton
+				href={`/analytics/graphql-api/graphiql?query=${btoa(gqlQuery)}`}
+				>Open in GraphiQL</LinkButton
+			>
+			<Code code={gqlQuery} lang="graphql" />
+		</CollapsibleSection>
+
+		<CollapsibleSection client:load title="Parameters">
+			<SchemaViewer schema={completeInputType} />
+			<h4>Typescript definition</h4>
+			<Code code={typescriptInput} lang="typescript" />
+		</CollapsibleSection>
+		<CollapsibleSection client:load title="Output">
+			<SchemaViewer schema={completeResponseType} />
+			<h4>Typescript definition</h4>
+			<Code code={typescriptOutput} lang="typescript" />
+		</CollapsibleSection>
+	</div>
+</StarlightPage>
+
+<style>
+	:root {
+		--sl-content-width: 1350px !important;
+	}
+</style>

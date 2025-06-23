@@ -1,0 +1,22 @@
+---
+import { getCollection } from "astro:content";
+import { GraphiQLClient } from "~/components/GraphiQLClient";
+const [schema] = await getCollection("graphql-api");
+import "graphiql/graphiql.css";
+import "~/tailwind.css";
+---
+
+<GraphiQLClient
+	client:only
+	schema={{
+		__schema: {
+			...schema.data,
+		},
+	}}
+/>
+
+<style>
+	:root {
+		--sl-content-width: 100% !important;
+	}
+</style>

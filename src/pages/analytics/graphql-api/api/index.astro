@@ -1,0 +1,106 @@
+---
+import { getCollection } from "astro:content";
+
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+const schema = await getCollection("graphql-api");
+
+const viewer = schema[0].data.types.find((el) => el.name.includes("viewer"));
+
+const groups = viewer?.fields.map((el) => el.name);
+
+const queries = groups?.map((el) => {
+	let name = el;
+	if (name === "accounts") {
+		name = "account";
+	}
+	if (name === "organizations") {
+		name = "organization";
+	}
+	if (name === "zones") {
+		name = "zone";
+	}
+	const query = schema[0].data.types.find((type) => type.name === name);
+	return query;
+});
+
+const account = queries?.find((el) => el?.name === "account");
+const organization = queries?.find((el) => el?.name === "organization");
+const zone = queries?.find((el) => el?.name === "zone");
+---
+
+<StarlightPage
+	frontmatter={{ title: "GraphQL API Schema", tableOfContents: false }}
+	><div>
+		<h2>Accounts</h2>
+		<div class="grid">
+			{
+				account?.fields
+					.filter((field) => field.name !== "accountTag")
+					.map((el) => (
+						<a
+							href={`/analytics/graphql-api/api/account.${el.name}/`}
+							class="mb-3 block min-h-32 w-full self-start rounded-md border border-solid border-gray-200 p-3 !text-inherit no-underline hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+						>
+							<h4>{el.name}</h4>
+							<p>{el.description}</p>
+						</a>
+					))
+			}
+		</div>
+		<h2>Organizations</h2>
+		<div class="grid">
+			{
+				organization?.fields
+					.filter((field) => field.name !== "organizationTag")
+					.map((el) => (
+						<div class="card">
+							<a href={`/analytics/graphql-api/api/organization.${el.name}/`}>
+								{el.name}
+							</a>
+							<p>{el.description}</p>
+						</div>
+					))
+			}
+		</div>
+
+		<h2>Zones</h2>
+		<div class="grid">
+			{
+				zone?.fields
+					.filter((field) => field.name !== "zoneTag")
+					.map((el) => (
+						<div class="card">
+							<a href={`/analytics/graphql-api/api/zone.${el.name}/`}>
+								{el.name}
+							</a>
+							<p>{el.description}</p>
+						</div>
+					))
+			}
+		</div>
+
+		<style>
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+				gap: 1rem;
+				margin: 1rem 0;
+			}
+			.card {
+				padding: 1rem;
+				border: 1px solid var(--sl-color-gray-5);
+				border-radius: 0.5rem;
+			}
+			.card h3 {
+				margin-top: 0;
+			}
+		</style>
+	</div></StarlightPage
+>
+
+<style>
+	:root {
+		--sl-content-width: 1350px !important;
+	}
+</style>
