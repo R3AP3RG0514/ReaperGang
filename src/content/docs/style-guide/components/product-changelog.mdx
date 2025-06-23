@@ -1,0 +1,27 @@
+---
+title: Product changelog
+---
+
+import { Type, MetaInfo } from "~/components";
+
+## Component
+
+```mdx live
+import { ProductChangelog } from "~/components";
+
+<ProductChangelog
+	products={["browser-rendering"]}
+/>
+```
+
+### Inputs
+
+The `products` and `area` options are mutually exclusive.
+
+- `products` <Type text="string[]" /> <MetaInfo text="optional" />
+
+	An array of product names, matching the filename without the extension suffix from the [`products` collection](https://github.com/cloudflare/cloudflare-docs/tree/production/src/content/products).
+
+- `area` <Type text="string" /> <MetaInfo text="optional" />
+
+	A product area, controlled by the `product.group` value inside the aforementioned `products` collection files.
