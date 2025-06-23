@@ -1,0 +1,65 @@
+---
+pcx_content_type: concept
+title: Pricing
+sidebar:
+  order: 2
+
+---
+
+import { Render } from "~/components"
+
+# Pricing
+
+:::note
+
+Workflows is included in both the Free and Paid [Workers plans](/workers/platform/pricing/#workers).
+
+:::
+
+Workflows pricing is identical to [Workers Standard pricing](/workers/platform/pricing/#workers) and are billed on three dimensions:
+
+* **CPU time**: the total amount of compute (measured in milliseconds) consumed by a given Workflow.
+* **Requests** (invocations): the number of Workflow invocations. [Subrequests](/workers/platform/limits/#subrequests) made from a Workflow do not incur additional request costs.
+* **Storage** (stored state): the total amount of state persisted by your Workflow instances.
+
+### Workflows pricing
+
+
+|              | Requests<sup>1, 2</sup>                                            | Duration                        | CPU time                                   | Storage                          |                                                                                                                                                                                                                                                                                                |
+| ------------ | ------------------------------------------------------------------ | ------------------------------- | ------------------------------------------ | -------------------------------- |
+| **Free**     | 100,000 per day                                                    | No charge for duration          | 10 milliseconds of CPU time per invocation | 1GB total storage                |                                                                                                                                                                                                                                               |
+| **Standard** | 10 million included per month <br /> +$0.30 per additional million | No charge or limit for duration | 30 million CPU milliseconds included per month<br /> +$0.02 per additional million CPU milliseconds<br /><br/> Max of 30 seconds of CPU time per invocation | 5 GB-month, + $0.20/ GB-month |
+
+A Workflow that is waiting on a response to an API call, paused as a result of calling `step.sleep`, or otherwise idle, does not incur CPU time.
+
+### Storage Usage
+
+Storage is billed using gigabyte-month (GB-month) as the billing metric, identical to [R2](/r2/pricing/#storage-usage) and the [Durable Objects SQL storage](/durable-objects/platform/pricing/#sqlite-storage-backend). A GB-month is calculated by averaging the peak storage per day over a billing period (30 days).
+
+* Storage is calculated across all instances, and includes running, errored, sleeping and completed instances.
+* By default, instance state is retained for [3 days on the Free plan](/workflows/reference/limits/) and [7 days on the Paid plan](/workflows/reference/limits/).
+* When creating a Workflow instance, you can set a shorter state retention period if you do not need to retain state for errored or completed Workflows. 
+* Deleting instances via the [Workers API](/workflows/build/workers-api/), [wrangler CLI](/workers/wrangler/commands/#workflows), REST API or dashboard will free up storage. Note that it may take a few minutes for storage limits to update.
+
+An instance that attempts to store state when your have reached the storage limit on the Free plan will cause a `WorkflowsStorageExceeded` error to be thrown.
+
+## Frequently Asked Questions
+
+Frequently asked questions related to Workflows pricing:
+
+### Are there additional costs for Workflows?
+
+No. Workflows are priced based on the same compute (CPU time) and requests (invocations) as Workers, as well as stored state. 
+
+### Are Workflows available on the [Workers Free](/workers/platform/pricing/#workers) plan?
+
+Yes. Workflows shares the same daily Free plan [limits](/workers/platform/pricing/#workers) with Workers.
+
+### How do Workflows show up on my bill?
+
+* For CPU time and requests: Workflows will show up as Workers, as they the same CPU time and request SKUs.
+* For storage: Workflows will show up as "Workflows - Storage (GB-mo)". 
+
+### Are there any limits to Workflows?
+
+Refer to the published [limits](/workflows/reference/limits/) documentation.
