@@ -1,0 +1,21 @@
+---
+productName: D1
+entries:
+  - term: primary database instance
+    general_definition: |-
+      the primary database instance is the original instance of a database. This database instance only exists in one location in the world.
+  - term: request latency
+    general_definition: |-
+      the request latency is the time it takes for a request from a user to be returned by D1.
+  - term: read replica
+    general_definition: |-
+      a read replica is an “almost up-to-date” copy of the primary database instance which only serve read requests. There may be multiple read replicas for a single primary database instance.
+  - term: replica lag
+    general_definition: |-
+      the difference between the primary database instance and a read replica.
+  - term: "query planner"
+    general_definition: |-
+      A component in a database management system which takes a user query and generates the most efficient plan of executing that query (the query plan). For example, the query planner decides which indices to use, or which table to access first.
+  - term: "session"
+    general_definition: |-
+      A Session encapsulates all the queries from one logical session for your application. For example, a Session may correspond to all queries coming from a particular web browser session.
