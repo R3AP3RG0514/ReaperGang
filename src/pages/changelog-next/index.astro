@@ -1,0 +1,207 @@
+---
+import StarlightPage, {
+	type StarlightPageProps,
+} from "@astrojs/starlight/components/StarlightPage.astro";
+import { render } from "astro:content";
+import { getChangelogs } from "~/util/changelogs";
+
+import Header from "~/components/changelog-next/Header.astro";
+import ProductPills from "~/components/changelog-next/ProductPills.astro";
+
+import { Steps } from "~/components";
+import { format } from "date-fns";
+
+const notes = await getChangelogs({
+	filter: (e) => {
+		return e.data.date.getTime() < Date.now();
+	},
+});
+
+const props = {
+	frontmatter: {
+		title: "Changelogs",
+		tableOfContents: false,
+		template: "splash",
+	},
+	hideTitle: true,
+	hideBreadcrumbs: true,
+} as StarlightPageProps;
+---
+
+<StarlightPage {...props}>
+	<Header notes={notes} />
+	<div id="changelogs-next-posts" data-max-visible="10">
+		{
+			notes.map(async (entry, idx) => {
+				const date = format(entry.data.date, "MMM dd, yyyy");
+				const time = format(entry.data.date, "hh:mm a");
+				const productIds = JSON.stringify(
+					entry.data.products.map((product) => product.id),
+				);
+
+				const { Content } = await render(entry);
+
+				return (
+					<div
+						class="!mt-0 sm:flex"
+						style={{ display: idx >= 10 ? "none" : "" }}
+						data-products={productIds}
+					>
+						<time
+							datetime={entry.data.date.toISOString()}
+							class="whitespace-nowrap leading-none sm:pr-4 sm:text-right"
+						>
+							<strong class="text-xs">{date}</strong>
+							<span class="text-xs sm:block">{time}</span>
+						</time>
+						<Steps>
+							<ol class="!mt-0 overflow-x-auto">
+								<li class="!pb-16">
+									<div>
+										<h3 class="leading-none">
+											<a
+												href={entry.data.link}
+												class="mb-4 !text-black no-underline hover:underline"
+											>
+												{entry.data.title}
+											</a>
+										</h3>
+										<ProductPills products={entry.data.products} />
+									</div>
+									<p>
+										<Content />
+									</p>
+								</li>
+							</ol>
+						</Steps>
+					</div>
+				);
+			})
+		}
+	</div>
+	<div class="flex items-center justify-center">
+		<button
+			id="changelogs-next-button"
+			class="h-12 rounded bg-cl1-brand-orange px-6 font-medium text-cl1-black"
+		>
+			Load more items
+		</button>
+	</div>
+</StarlightPage>
+
+<script>
+	const container = document.querySelector(
+		"#changelogs-next-posts",
+	) as HTMLDivElement;
+
+	const filter = document.querySelector(
+		"#changelogs-next-filter",
+	) as HTMLSelectElement;
+
+	const onFilterChange = () => {
+		const entries = document.querySelectorAll<HTMLElement>("[data-products]");
+
+		if (!entries) return;
+
+		const value = filter.value;
+		const maxVisible = Number(container.dataset.maxVisible);
+
+		if (value === "all") {
+			entries.forEach((entry, idx) => {
+				if (idx < maxVisible) {
+					entry.style.display = "";
+				} else {
+					entry.style.display = "none";
+				}
+			});
+
+			return;
+		}
+
+		let visible = 0;
+		for (const entry of entries) {
+			if (!entry.dataset.products) continue;
+
+			const products = JSON.parse(entry.dataset.products);
+
+			const show = products.includes(value);
+
+			if (show && visible < maxVisible) {
+				visible++;
+				entry.style.display = "";
+			} else {
+				entry.style.display = "none";
+			}
+		}
+	};
+
+	filter?.addEventListener("change", onFilterChange);
+
+	const button = document.querySelector(
+		"#changelogs-next-button",
+	) as HTMLButtonElement;
+
+	const onButtonClick = () => {
+		const posts = document.querySelectorAll<HTMLDivElement>(
+			'#changelogs-next-posts [data-products][style*="display:none"]',
+		);
+
+		if (!posts) return;
+
+		let arr = Array.from(posts);
+
+		if (filter.value !== "all") {
+			arr = arr.filter((p) => {
+				if (!p.dataset.products) return false;
+
+				const products = JSON.parse(p.dataset.products);
+
+				return products.includes(filter.value);
+			});
+		}
+
+		if (!arr) return;
+
+		const extraPosts = arr.slice(0, 10);
+
+		extraPosts.forEach((post) => (post.style.display = ""));
+
+		container.dataset.maxVisible = String(
+			Number(container.dataset.maxVisible) + extraPosts.length,
+		);
+	};
+
+	button?.addEventListener("click", onButtonClick);
+</script>
+
+<style>
+	:root {
+		.sl-container {
+			--sl-content-width: 50rem !important;
+			margin-inline: auto !important;
+		}
+
+		.feedback-prompt-content {
+			display: none !important;
+		}
+
+		#footer-links {
+			justify-content: center;
+		}
+	}
+
+	.sl-steps {
+		--bullet-size: 24px !important;
+
+		& > li {
+			padding-inline-start: calc(var(--bullet-size) + 2.5rem) !important;
+
+			&::before {
+				content: "•" !important;
+				font-size: calc(var(--bullet-size) * 2) !important;
+				line-height: calc(var(--bullet-size) / 1.5) !important;
+				color: var(--orange-accent-200) !important;
+			}
+		}
+	}
+</style>
