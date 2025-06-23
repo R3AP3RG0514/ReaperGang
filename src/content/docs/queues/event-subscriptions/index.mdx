@@ -1,0 +1,37 @@
+---
+title: Event Subscriptions
+type: overview
+pcx_content_type: overview
+sidebar:
+  order: 4
+  group:
+    badge: Beta
+head:
+  - tag: title
+    content: Overview
+---
+
+import { Badge, Description, LinkCard } from "~/components"
+
+<Description>
+
+Receive event notifications from Cloudflare services, and take programmatic actions in response.
+
+</Description>
+
+Cloudflare Event Subscriptions let you build event driven workflows, by subscribing to notifications from Cloudflare products such as [Super Slurper](/r2/data-migration/super-slurper), [Workflows](/workflows/), and [Workers AI](/workers-ai/). Events are delivered to a [Queue](/queues/), so you can consume them progammatically.
+
+TODO: code sample here
+
+<LinkCard
+	title="Create your first Event Subscription"
+	href="/queues/event-subscriptions/getting-started"
+	description="Follow our tutorial to begin receiving and consuming events"
+/>
+
+<LinkCard
+	title="Available event sources and events"
+	href="/queues/event-subscriptions/event-sources"
+	description="Explore the event sources and event types you can subscribe to"
+/>
+
