@@ -1,0 +1,139 @@
+---
+link: "/cloudflare-one/changelog/warp/"
+productName: Zero Trust WARP Client
+productLink: "/cloudflare-one/connections/connect-devices/warp/"
+productArea: Cloudflare One
+productAreaLink: /cloudflare-one/changelog/
+entries:
+  - publish_date: "2025-01-17"
+    title: WARP download repository
+    description: |-
+      Microsoft is [retiring the App Center](https://learn.microsoft.com/en-gb/appcenter/retirement) which customers previously used to download Windows and macOS WARP client releases. As a result, Cloudflare has launched a new [Downloads page](/cloudflare-one/connections/connect-devices/warp/download-warp/) where you can find WARP client downloads for all operating systems, version history, and release notes.
+
+  - publish_date: "2024-12-19"
+    title: Cloudflare One Agent for iOS (version 1.8)
+    description: |-
+      A new GA release for the iOS Cloudflare One Agent is now available in the [iOS App Store](https://apps.apple.com/us/app/cloudflare-one-agent/id6443476492). This release includes support for an exciting new capability, [per-app VPN](/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/partners/intune/#per-app-vpn-for-ios). This release also includes fixes and minor improvements.
+
+      Changes and improvements:
+        - Added support for per-app VPN configuration.
+        - Fixed issue where some users could not connect unless they rotated their keys after an update.
+        - Fixed a potential crash when connecting to the tunnel.
+
+  - publish_date: "2024-12-19"
+    title: Cloudflare One Agent for Android (version 2.3)
+    description: |-
+      A new GA release for the Android Cloudflare One Agent is now available in the [Google Play Store](https://play.google.com/store/apps/details?id=com.cloudflare.cloudflareoneagent). This release includes support for an exciting new capability, [per-app VPN](/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/partners/intune/#per-app-vpn-for-android). This release also includes fixes and minor improvements.
+
+      Changes and improvements:
+        - Added support for per-app VPN configuration.
+        - Fixed an issue where the WARP tunnel is connected immediately when **Auto connect** is greater than 0.
+        - Fixed an issue where rapidly changing service modes resulted in a crash.
+
+  - publish_date: "2024-12-19"
+    title: WARP client for Linux (version 2024.12.554.0)
+    description: |-
+      A new GA release for the Linux WARP client is now available in the [package repository](https://pkg.cloudflareclient.com/). This release includes fixes and minor improvements.
+
+      Changes and improvements:
+        - Consumers can now set the tunnel protocol using `warp-cli tunnel protocol set <protocol>`.
+        - Extended diagnostics collection time in `warp-diag` to ensure logs are captured reliably.
+        - Improved captive portal support by disabling the firewall during captive portal login flows.
+        - Improved reliability of connection establishment logic under degraded network conditions.
+        - Improved reconnection speed when a Cloudflare server is in a degraded state.
+        - Improved captive portal detection on certain public networks.
+        - Reduced connectivity interruptions on WireGuard Split Tunnel Include mode configurations.
+        - Fixed connectivity issues switching between managed network profiles with different configured protocols.
+        - QLogs are now disabled by default and can be enabled with `warp-cli debug qlog enable`. The QLog setting from previous releases will no longer be respected.
+
+  - publish_date: "2024-12-04"
+    title: Custom device posture integration
+    description: |-
+      WARP now supports setting up [custom device posture integrations](/cloudflare-one/identity/devices/service-providers/custom/) using a third-party API of your choice.
+  - publish_date: "2024-11-19"
+    title: MASQUE GA
+    description: |-
+      MASQUE as a device tunnel protocol option is now generally available (GA). Refer to [Device tunnel protocol](/cloudflare-one/connections/connect-devices/warp/configure-warp/warp-settings/#device-tunnel-protocol) for configuration details and minimum WARP client requirements.
+
+  - publish_date: "2024-11-18"
+    title: WARP client for Linux (version 2024.11.309.0)
+    description: |-
+      A new GA release for the Linux WARP client is now available in the [package repository](https://pkg.cloudflareclient.com/). This release contains reliability improvements and general bug fixes.
+
+      Changes and improvements:
+        - Fixed an issue where SSH sessions and other connections ould drop when a device that is using MASQUE changes its primary network interface.
+        - Device posture client certificate checks now support PKCS#1.
+        - Fixed an issue to ensure the Cloudflare root certificate (or custom certificate) is installed in the trust store if not already there.
+        - Reduced unnecessary log messages when `resolv.conf` has no owner.
+        - Fixed an issue with `warp-diag` printing benign TLS certificate errors.
+        - Fixed an issue with the WARP client becoming unresponsive during startup.
+        - Extended diagnostics collection time in `warp-diag` to ensure logs are captured reliably.
+        - Fixed an issue that was preventing proper operation of DNS-over-TLS (DoT) for consumer users.
+
+  - publish_date: "2024-10-03"
+    title: WARP client for Linux (version 2024.9.346.0)
+    description: |-
+      A new GA release for the Linux WARP client is now available in the [package repository](https://pkg.cloudflareclient.com/). This release contains minor fixes and minor improvements.
+
+      Notable updates:
+        - Added `target list` to the `warp-cli` to enhance the user experience with the [Access for Infrastructure SSH](/cloudflare-one/connections/connect-networks/use-cases/ssh/ssh-infrastructure-access/) solution.
+        - Added the ability to customize PCAP options in the `warp-cli`.
+        - Added a list of installed applications in `warp-diag`.
+        - Added a `tunnel reset mtu` subcommand to the `warp-cli`.
+        - Added the ability for `warp-cli` to use the team name provided in the MDM file for initial registration.
+        - Added a JSON output option to the `warp-cli`.
+        - Added the ability to execute a PCAP on multiple interfaces with `warp-cli`.
+        - Added MASQUE tunnel protocol support for the consumer version of WARP ([1.1.1.1 w/ WARP](/warp-client/)).
+        - Improved the performance of firewall operations when enforcing split tunnel configuration.
+        - Fixed an issue where device posture certificate checks were unexpectedly failing.
+        - Fixed an issue where the Linux GUI fails to open the browser login window when registering a new Zero Trust organization.
+        - Fixed an issue where clients using service tokens failed to retry after a network change.
+        - Fixed an issue where the client, when switching between WireGuard and MASQUE protocols, sometimes required a manual tunnel key reset.
+        - Fixed a known issue which required users to re-register when an older single configuration MDM file was deployed after deploying the newer, multiple configuration format.
+        - Deprecated `warp-cli` commands have been removed. If you have any workflows that use the deprecated commands, update to the new commands where necessary.
+
+      Known issues:
+        - Using MASQUE as the tunnel protocol may be incompatible if your organization has Regional Services is enabled.
+
+  - publish_date: "2024-08-15"
+    title: WARP client for Linux (version 2024.6.497.0)
+    description: |-
+      A new GA release for the Linux WARP client is now available in the [package repository](https://pkg.cloudflareclient.com/). This release includes some exciting new features. It also includes additional fixes and minor improvements.
+
+      New features:
+        - The WARP client now supports operation on Ubuntu 24.04.
+        - Admins can now elect to have ZT WARP clients connect using the MASQUE protocol; this setting is in Device Profiles. Note: before MASQUE can be used, the global setting for Override local interface IP must be enabled. For more detail, refer to [Device tunnel protocol](/cloudflare-one/connections/connect-devices/warp/configure-warp/warp-settings/#device-tunnel-protocol). This feature will be rolled out to customers in stages over approximately the next month.
+        - The Device Posture [client certificate check](/cloudflare-one/identity/devices/warp-client-checks/client-certificate/) has been substantially enhanced. The primary enhancement is the ability to check for client certificates that have unique common names, made unique by the inclusion of the device serial number or host name (for example, CN = `123456.mycompany`, where 123456 is the device serial number).
+        - TCP MSS clamping is now used where necessary to meet the MTU requirements of the tunnel interface. This will be especially helpful in Docker use cases.
+
+      Warning:
+        - Ubuntu 16.04 and 18.04 are not supported by this version of the client.
+        - This is the last GA release that will be supporting older, deprecated `warp-cli` commands. There are two methods to identify these commands. One, when used in this release, the command will work but will also return a deprecation warning. And two, the deprecated commands do not appear in the output of `warp-cli -h`.
+
+      Known issues:
+        - There are certain known limitations preventing the use of the MASQUE tunnel protocol in certain scenarios. Do not use the MASQUE tunnel protocol if:
+          - A Magic WAN integration is on the account and does not have the latest packet flow path for WARP traffic. To check the migration status, contact your account team.
+          - Your account has Regional Services enabled.
+        - The Linux client GUI does not yet support all GUI features found in the Windows and macOS clients. Future releases of the Linux client will be adding these GUI features.
+        - The Zero Trust team name is not visible in the GUI if you upgraded from the previous GA release using an MDM tool.
+        - Sometimes the WARP icon will remain gray (disconnected state) while in dark mode.
+
+  - publish_date: "2024-06-27"
+    title: Cloudflare One Agent for iOS (version 1.4)
+    description: |-
+      A new GA release for the iOS Cloudflare One Agent is now available in the [iOS App Store](https://apps.apple.com/us/app/cloudflare-one-agent/id6443476492).
+
+      Notable updates:
+        - Fixed an issue with endpoint IP settings in MDM files
+        - Cleaned up some erroneous links
+        - Updated the Terms of Service
+
+  - publish_date: "2024-05-10"
+    title: Cloudflare One Agent for Android (version 1.7)
+    description: |-
+      A new GA release for the Android Cloudflare One Agent is now available in the [Google Play Store](https://play.google.com/store/apps/details?id=com.cloudflare.cloudflareoneagent). This release fixes an issue where the user was not prompted to select the client certificate in the browser during Access registration.
+
+  - publish_date: "2024-05-09"
+    title: Crowdstrike posture checks for online status
+    description: |-
+      Two new Crowdstrike attributes, _Last Seen_ and _State_, are now available to be used as selectors in the [Crowdstrike service provider integration](/cloudflare-one/identity/devices/service-providers/crowdstrike/).
