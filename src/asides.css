@@ -1,0 +1,49 @@
+.starlight-aside {
+	border: unset;
+	border-radius: 0.25rem;
+	display: flex;
+	flex-wrap: nowrap; 
+	align-items: flex-start;
+	padding: 0.75rem 1rem;
+
+	&.starlight-aside--note {
+		background-color: rgb(236, 244, 255);
+	}
+
+	&.starlight-aside--caution {
+		background-color: rgb(255, 248, 228);
+	}
+
+	.starlight-aside__title {
+		font-size: 0;
+		line-height: 0;
+		display: flex;
+		align-items: flex-start; 
+		margin-right: 0.125rem; 
+		margin-top: 0.25rem;
+
+		svg {
+			display: block;
+			width: 1rem;
+			height: 1rem;
+			flex-shrink: 0;
+		}
+	}
+
+	.starlight-aside__content {
+		margin-top: unset;
+		display: inline;
+		font-size: 0.875rem;
+		flex: 1; 
+	}
+}
+
+:root[data-theme="dark"] {
+	.starlight-aside--note {
+		background-color: rgb(0, 28, 67);
+	}
+
+	.starlight-aside--caution {
+		background-color: rgb(62, 45, 10);
+	}
+}
