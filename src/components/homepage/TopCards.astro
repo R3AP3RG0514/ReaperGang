@@ -1,0 +1,43 @@
+---
+import LinkCard2 from "../LinkCard2.astro";
+
+const topCards = [
+	{
+		label: "Fundamentals",
+		href: "/fundamentals/",
+		description: "How Cloudflare works and how to get started.",
+		icon: "growth-outline",
+	},
+	{
+		label: "Docs directory",
+		href: "/products/",
+		description: "How to use specific Cloudflare products.",
+		icon: "documentation-outline",
+	},
+	{
+		label: "Learning paths",
+		href: "/learning-paths/",
+		description: "Step-by-step walkthroughs on a variety of concepts.",
+		icon: "cloudflare-ruleset-engine-outline",
+	},
+	{
+		label: "Reference architectures",
+		href: "/reference-architecture/",
+		description: "How our products are designed and architected.",
+		icon: "code-branch-outline",
+	},
+];
+---
+
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+	{
+		topCards.map((card) => (
+			<LinkCard2
+				title={card.label}
+				description={card.description}
+				href={card.href}
+				icon={card.icon}
+			/>
+		))
+	}
+</div>

@@ -1,0 +1,32 @@
+---
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+import Render from "~/components/Render.astro";
+---
+
+<div class="hidden w-full flex-col gap-10 md:flex">
+	<div class="flex justify-between">
+		<h2>Build with Cloudflare</h2>
+		<a href="https://developers.cloudflare.com/workers/">
+			Learn more about Workers
+		</a>
+	</div>
+	<div>
+		<Tabs>
+			<TabItem label="Return HTML">
+				<Render file="return-html-example-js" product="workers" />
+			</TabItem>
+			<TabItem label="Return JSON">
+				<Render file="return-json-example-js" product="workers" />
+			</TabItem>
+			<TabItem label="Fetch HTML">
+				<Render file="fetch-html-example-js" product="workers" />
+			</TabItem>
+			<TabItem label="Redirect">
+				<Render file="redirect-example-js" product="workers" />
+			</TabItem>
+			<TabItem label="Respond with another site">
+				<Render file="respond-another-site-example-js" product="workers" />
+			</TabItem>
+		</Tabs>
+	</div>
+</div>

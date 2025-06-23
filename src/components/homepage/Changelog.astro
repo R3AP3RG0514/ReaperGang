@@ -1,0 +1,30 @@
+---
+import { render } from "astro:content";
+import { getChangelogs } from "~/util/changelog";
+
+const changelogs = await getChangelogs({}).then((arr) => arr.slice(0, 5));
+---
+
+<div class="hidden flex-col items-center justify-center gap-10 md:flex">
+	<h2>Documentation changelog</h2>
+	<div class="h-[28rem] w-3/5 overflow-y-scroll rounded border px-6 py-4">
+		<ul class="overflow-y-scroll pl-0">
+			{
+				changelogs.map(async (changelog) => {
+					const { Content } = await render(changelog);
+
+					return (
+						<li>
+							<h5>{changelog.data.title}</h5>
+							<div class="line-clamp-4">
+								<Content />
+							</div>
+							<a href={`/changelog/${changelog.id}`}>Read more</a>
+						</li>
+					);
+				})
+			}
+		</ul>
+	</div>
+	<a href="/changelog/"> Go to full changelog </a>
+</div>

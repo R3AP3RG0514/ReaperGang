@@ -1,0 +1,76 @@
+---
+const groups = [
+	{
+		heading: "Community",
+		description:
+			"Share ideas, answers, code and compare notes with the Cloudflare community",
+		links: [
+			{
+				label: "Discord",
+				href: "https://discord.gg/cloudflaredev",
+			},
+			{
+				label: "Twitter",
+				href: "https://twitter.com/cloudflaredev",
+			},
+			{
+				label: "Community forum",
+				href: "https://community.cloudflare.com/",
+			},
+		],
+	},
+	{
+		heading: "Open Source",
+		description:
+			"Cloudflare contributes to the open-source ecosystem in a variety of ways, including:",
+		links: [
+			{
+				label: "GitHub projects",
+				href: "https://github.com/cloudflare/",
+			},
+			{
+				label: "Sponsorship projects",
+				href: "/sponsorships/",
+			},
+			{
+				label: "Style guide",
+				href: "/style-guide/",
+			},
+		],
+	},
+	{
+		heading: "Blog",
+		description:
+			"Get the latest news on Cloudflare products, technologies, and culture.",
+		links: [
+			{
+				label: "Read the blog",
+				href: "https://blog.cloudflare.com/",
+			},
+		],
+	},
+];
+---
+
+<div class="not-content grid grid-cols-1 gap-8 md:grid-cols-3">
+	{
+		groups.map((group) => (
+			<div>
+				<p class="text-xs font-medium uppercase">{group.heading}</p>
+				<p class="mt-1 text-sm">{group.description}</p>
+				<ul class="mt-4 list-none pl-0">
+					{group.links.map((item) => (
+						<li>
+							<a
+								href={item.href}
+								class="text-sm font-medium !text-black no-underline"
+							>
+								{item.label}
+							</a>
+						</li>
+					))}
+				</ul>
+			</div>
+		))
+	}
+</div>

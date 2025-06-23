@@ -1,0 +1,57 @@
+---
+import StarlightPage, {
+	type StarlightPageProps,
+} from "@astrojs/starlight/components/StarlightPage.astro";
+
+import Hero from "~/components/homepage/Hero.astro";
+import TopCards from "~/components/homepage/TopCards.astro";
+import GetStarted from "~/components/homepage/GetStarted.astro";
+import BuildWithCloudflare from "~/components/homepage/BuildWithCloudflare.astro";
+import BottomLinks from "~/components/homepage/BottomLinks.astro";
+import OfferingsTabs from "~/components/homepage/OfferingsTabs.tsx";
+import Changelog from "~/components/homepage/Changelog.astro";
+
+const props = {
+	frontmatter: {
+		title: "Cloudflare Docs",
+		description: "Explore guides and tutorials for using Cloudflare.",
+		template: "splash",
+	},
+	hideTitle: true,
+	hideBreadcrumbs: true,
+} as StarlightPageProps;
+---
+
+<StarlightPage {...props}>
+	<div class="space-y-16">
+		<Hero />
+		<TopCards />
+		<div>
+			<OfferingsTabs client:load />
+		</div>
+		<GetStarted />
+		<BuildWithCloudflare />
+		<Changelog />
+		<BottomLinks />
+	</div>
+</StarlightPage>
+
+<style>
+	:root {
+		.content-panel {
+			--sl-content-pad-x: 1rem;
+
+			@media (width >= 48rem) {
+				--sl-content-pad-x: 2rem;
+			}
+
+			@media (width >= 64rem) {
+				--sl-content-pad-x: 4rem;
+			}
+		}
+
+		.sl-container {
+			max-width: 100% !important;
+		}
+	}
+</style>

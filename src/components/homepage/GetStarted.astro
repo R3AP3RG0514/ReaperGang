@@ -1,0 +1,45 @@
+---
+const getStartedCards = [
+	{
+		label: "Sign up",
+		href: "https://dash.cloudflare.com/sign-up",
+		description:
+			"Create an account on the Cloudflare dashboard to get started.",
+	},
+	{
+		label: "Onboard your domain",
+		href: "/fundamentals/setup/manage-domains/add-site/",
+		description:
+			"Put your website or app behind Cloudflare to boost site speed and fight web attacks like DDoS.",
+	},
+	{
+		label: "Get started with Zero Trust",
+		href: "/cloudflare-one/setup/",
+		description:
+			"Connect a workforce or home network to protect users, devices, data, and private apps.",
+	},
+	{
+		label: "Get started with Workers",
+		href: "/workers/get-started/",
+		description:
+			"Build and scale a simple website or full-stack application. Deploy code globally while Cloudflare handles the infrastructure.",
+	},
+];
+---
+
+<div class="flex flex-col items-center justify-center gap-10">
+	<h2>Get started</h2>
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+		{
+			getStartedCards.map((card) => (
+				<a
+					href={card.href}
+					class="rounded-md border border-solid border-gray-200 p-6 !text-inherit no-underline hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+				>
+					<p class="!mt-0 font-semibold">{card.label}</p>
+					<div class="leading-2 !mt-1 text-sm">{card.description}</div>
+				</a>
+			))
+		}
+	</div>
+</div>

@@ -1,0 +1,28 @@
+---
+import { z } from "astro:schema";
+import ReactLinkCard2 from "./LinkCard2.tsx";
+
+const props = z.object({
+	title: z.string(),
+	description: z.string(),
+	href: z.string(),
+	icon: z.string(),
+});
+
+const { title, description, href, icon } = props.parse(Astro.props);
+
+const images = import.meta.glob<string>("/src/icons/*.svg", {
+	query: "?raw",
+	import: "default",
+});
+
+const image = images[`/src/icons/${icon}.svg`];
+
+if (!image) {
+	throw new Error(`[LinkCard2]: Icon ${icon} not found in /src/icons/`);
+}
+
+const svg = await image();
+---
+
+<ReactLinkCard2 title={title} description={description} href={href} svg={svg} />
