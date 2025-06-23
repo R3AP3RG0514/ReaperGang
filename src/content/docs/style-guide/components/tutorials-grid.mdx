@@ -1,0 +1,45 @@
+---
+title: Tutorials grid
+---
+
+This component fetches all pages with `pcx_content_type: tutorial` under a given product.
+
+## Import
+
+```mdx
+import { TutorialsGrid } from "~/components";
+```
+
+## Usage
+
+```mdx live
+import { TutorialsGrid } from "~/components";
+
+<TutorialsGrid product="workers" frontmatterBadges={["languages"]} />
+```
+
+## `<TutorialsGrid>` Props
+
+### `product`
+
+**type:** `string`
+
+The product to fetch tutorials for, based on the file location and the `products` frontmatter property.
+
+This property is optional, and will be inferred from the page it is used on if omitted.
+
+### `frontmatterBadges`
+
+**type:** `string[]`
+
+Frontmatter values to add badges from.
+
+For example, given the below frontmatter, the badges `foo` and `bar` would be added when `frontmatterBadges={["stuff"]}` is provided.
+
+```mdx
+---
+title: Example Title
+stuff:
+  - foo
+  - bar
+```

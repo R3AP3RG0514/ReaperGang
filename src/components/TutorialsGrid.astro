@@ -1,0 +1,152 @@
+---
+import { z } from "astro:schema";
+import {
+	getCollection,
+	getEntry,
+	reference,
+	type CollectionEntry,
+} from "astro:content";
+import type { ComponentProps } from "astro/types";
+import { Badge } from "@astrojs/starlight/components";
+
+type Props = z.infer<typeof props>;
+type BadgeType = ComponentProps<typeof Badge>;
+
+const props = z.object({
+	product: reference("products").optional(),
+	frontmatterBadges: z.string().array().optional(),
+});
+
+let { product, frontmatterBadges } = props.parse(Astro.props);
+
+type DocsEntry = CollectionEntry<"docs">;
+type VideoEntry = CollectionEntry<"videos">;
+
+const tutorials: Array<DocsEntry | VideoEntry> = [];
+
+if (!product) {
+	product = {
+		id: Astro.url.pathname.split("/").filter(Boolean)[0],
+		collection: "products",
+	};
+}
+
+const productEntry = await getEntry(product);
+
+if (!productEntry) {
+	throw new Error(
+		`[TutorialsGrid] Unable to find product YAML for ${product.id}.`,
+	);
+}
+
+const productTitle = productEntry.data.product.title;
+
+const docs = await getCollection("docs", (entry) => {
+	return (
+		// pcx_content_type: tutorial
+		entry.data.pcx_content_type === "tutorial" &&
+		// /src/content/r2/**/*.mdx
+		(entry.id.startsWith(`${productEntry.id}/`) ||
+			// products: [R2]
+			entry.data.products?.some(
+				(v: string) => v.toUpperCase() === productTitle.toUpperCase(),
+			))
+	);
+});
+
+tutorials.push(...docs);
+
+const videos = await getCollection("videos", (entry) => {
+	return entry.data.products.some(
+		(v: string) => v.toUpperCase() === productTitle.toUpperCase(),
+	);
+});
+
+tutorials.push(...videos);
+
+tutorials.sort((a, b) => Number(b.data.updated) - Number(a.data.updated));
+
+const difficulties = {
+	Beginner: "success",
+	Intermediate: "caution",
+	Advanced: "danger",
+} as Record<string, ComponentProps<typeof Badge>["variant"]>;
+---
+
+<div class="grid grid-cols-2 gap-4">
+	{
+		tutorials.map((tutorial) => {
+			const title =
+				tutorial.collection === "docs" ? tutorial.data.title : tutorial.id;
+
+			const href =
+				tutorial.collection === "docs"
+					? `/${tutorial.id}/`
+					: tutorial.data.link;
+
+			const difficulty = tutorial.data.difficulty;
+
+			const YOUTUBE_DOMAINS = ["www.youtube.com", "youtube.com", "youtu.be"];
+			const youtube =
+				tutorial.collection === "videos" &&
+				YOUTUBE_DOMAINS.includes(new URL(tutorial.data.link).hostname);
+
+			const spotlight =
+				tutorial.collection === "docs" && tutorial.data.spotlight;
+
+			const badges: BadgeType[] = [];
+
+			if (difficulty) {
+				badges.push({
+					text: difficulty,
+					variant: difficulties[difficulty],
+				});
+			}
+
+			if (youtube) {
+				badges.push({
+					text: "YouTube",
+					variant: "note",
+				});
+			}
+
+			if (spotlight) {
+				badges.push({
+					text: "Community",
+					variant: "tip",
+				});
+			}
+
+			if (frontmatterBadges) {
+				for (const frontmatterBadge of frontmatterBadges) {
+					const values =
+						tutorial.data[frontmatterBadge as keyof typeof tutorial.data];
+
+					if (values) {
+						if (Array.isArray(values)) {
+							for (const value of values) {
+								badges.push({ text: value.toString() });
+							}
+						} else {
+							badges.push({ text: values.toString() });
+						}
+					}
+				}
+			}
+
+			return (
+				<a
+					href={href}
+					class="flex flex-col rounded border border-cl1-gray-8 p-6 !text-black no-underline hover:bg-cl1-gray-9 dark:border-cl1-gray-2 dark:bg-cl1-gray-0 dark:hover:bg-cl1-gray-1"
+				>
+					<strong>{title}</strong>
+					<p class="!mt-auto">
+						{badges.map((badge) => (
+							<Badge {...badge} />
+						))}
+					</p>
+				</a>
+			);
+		})
+	}
+</div>
