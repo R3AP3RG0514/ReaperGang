@@ -1,0 +1,36 @@
+---
+title: unstable_startWorker()
+pcx_content_type: concept
+sidebar:
+  order: 17
+head: []
+description: Test multiple units of your Worker working together.
+---
+
+import { Render } from "~/components";
+import { LinkButton } from "@astrojs/starlight/components";
+
+note: we recommend using vitest
+
+## [Wrangler's `unstable_startWorker()` API](/workers/wrangler/api/#unstable_startworker)
+
+:::caution
+`unstable_startWorker()` is an experimental API subject to breaking changes.
+:::
+
+If you do not want to use Vitest and would like to write integration tests for a single Worker, consider using [Wrangler's `unstable_startWorker()` API](/workers/wrangler/api/#unstable_startworker). This API exposes the internals of Wrangler's dev server, and allows you to customise how it runs.
+
+```js
+import assert from "node:assert";
+import { unstable_startWorker } from "wrangler";
+
+const worker = await unstable_startWorker({ config: "wrangler.json" });
+try {
+	const response = await worker.fetch("/?a=1&b=2");
+	assert.strictEqual(await response.text(), "3");
+} finally {
+	await worker.dispose();
+}
+```
+
+<Render file="testing-pages-functions" product="workers" />

@@ -1,0 +1,27 @@
+---
+pcx_content_type: navigation
+title: Vitest integration
+sidebar:
+  order: 15
+---
+
+import { DirectoryListing, Render, LinkButton } from "~/components";
+
+The Workers Vitest integration is the recommended way to test Workers and [Pages Functions](/pages/functions/).
+
+[Vitest](https://vitest.dev/) is a popular JavaScript testing framework featuring a very fast watch mode, Jest compatibility, and out-of-the-box support for TypeScript.
+The `@cloudflare/vitest-pool-workers` package works by running code inside a Cloudflare Worker where Vitest would usually run inside a [Node.js worker thread](https://nodejs.org/api/worker_threads.html).
+
+The Workers Vitest integration:
+
+- Supports both **unit tests** and **integration tests**.
+- Provides direct access to Workers runtime APIs and bindings
+- Implements isolated per-test storage.
+- Runs tests fully-locally using [Miniflare](https://miniflare.dev/).
+- Leverages Vitest's hot-module reloading for near instant reruns.
+- Provides a declarative interface for mocking outbound requests.
+- Supports projects with multiple Workers.
+
+<LinkButton href="/workers/testing/vitest-integration/write-your-first-test/">
+	Write your first test
+</LinkButton>
