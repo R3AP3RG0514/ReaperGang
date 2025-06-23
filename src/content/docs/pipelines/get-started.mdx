@@ -1,0 +1,117 @@
+---
+title: Getting started
+pcx_content_type: get-started
+sidebar:
+  order: 1
+head:
+  - tag: title
+    content: Getting started
+---
+
+import { Render, PackageManagers } from "~/components";
+
+Pipelines let you ingest real-time data streams, such as click events on a website, or logs from a service. You can send data to a Pipeline from a Worker, or via HTTP. Pipelines handle batching requests and scales in response to your workload. Finally, Pipelines deliver the output into R2 as JSON files, automatically handling partitioning and compression for efficient querying.
+
+By following this guide, you will:
+
+1. Create your first Pipeline.
+2. Connect it to your R2 bucket.
+3. Post data to it via HTTP.
+4. Verify the output file written to R2.
+
+:::note
+
+Pipelines is in **public beta**, and any developer with a [paid Workers plan](/workers/platform/pricing/#workers) can start using Pipelines immediately.
+
+:::
+
+## Prerequisites
+
+To use Pipelines, you will need:
+
+<Render file="prereqs" product="workers" />
+
+## 1. Set up an R2 bucket
+
+Pipelines let you ingest records in real time, and load them into an R2 bucket. Create a bucket by following the [get started guide for R2](/r2/get-started/). Save the bucket name for the next step.
+
+## 2. Create a Pipeline
+
+To create a Pipeline using Wrangler, run the following command in a terminal, and specify:
+
+- The name of your Pipeline
+- The name of the R2 bucket you created in step 1
+
+```sh
+npx wrangler pipelines create [PIPELINE-NAME] --r2-bucket [R2-BUCKET-NAME] --batch-max-seconds 5 --compression none
+```
+
+After running this command, you'll be prompted to authorize Cloudflare Workers Pipelines to create R2 API tokens on your behalf. These tokens are required by your Pipeline. Your Pipeline uses the tokens when loading data into your bucket. You can approve the request through the browser link which will open automatically.
+
+If you prefer not to authenticate this way, you may pass your [R2 API Tokens](/r2/api/s3/tokens/) to Wrangler:
+```sh
+npx wrangler pipelines create [PIPELINE-NAME] --r2 [R2-BUCKET-NAME] --r2-access-key-id [ACCESS-KEY-ID] --r2-secret-access-key [SECRET-ACCESS-KEY]
+```
+
+When choosing a name for your Pipeline:
+
+1. Ensure it is descriptive and relevant to the type of events you intend to ingest. You cannot change the name of the Pipeline after creating it.
+2. Pipeline names must be between 1 and 63 characters long.
+3. The name cannot contain special characters outside dashes (`-`).
+4. The name must start and end with a letter or a number.
+
+You'll notice that we have set two optional flags while creating the pipeline: `--batch-max-seconds` and `--compression`. We've added these flags to make it faster for you to see the output of your first Pipeline. For production use cases, we recommend keeping the default settings.
+
+Once you create your Pipeline, you will receive a HTTP endpoint which you can post data to. You should see output as shown below:
+
+```sh output
+🌀 Authorizing R2 bucket "[R2-BUCKET-NAME]"
+Opening a link in your default browser: https://oauth.pipelines.cloudflare.com/oauth/login?accountId=<ACCOUNT_ID>&bucketName=[R2-BUCKET-NAME]&pipelineName=[PIPELINE-NAME]
+🌀 Checking access to R2 bucket "[R2-BUCKET-NAME]"
+🌀 Creating Pipeline named "[PIPELINE-NAME]"
+✅ Successfully created Pipeline "[PIPELINE-NAME]" with id [PIPELINE-ID]
+🎉 You can now send data to your Pipeline!
+
+To start interacting with this Pipeline from a Worker, open your Worker’s config file and add the following binding configuration:
+
+{
+  "pipelines": [
+    {
+      "pipeline": "[PIPELINE-NAME]",
+      "binding": "PIPELINE"
+    }
+  ]
+}
+
+Send data to your Pipeline's HTTP endpoint:
+
+  curl "https://<PIPELINE_ID>.pipelines.cloudflare.com" -d '[{"foo": "bar"}]
+```
+
+## 3. Post data to your pipeline
+
+Use a curl command in your terminal to post an array of JSON objects to the endpoint you received in step 1.
+
+```sh
+curl -H "Content-Type:application/json" \
+    -d '[{"account_id":"test", "other_data": "test"},{"account_id":"test","other_data": "test2"}]' \
+    <HTTP-endpoint>
+```
+
+Once the Pipeline successfully accepts the data, you will receive a success message.
+
+Pipelines handle batching the data, so you can continue posting data to the Pipeline. Once a batch is filled up, the data will be partitioned by date, and written to your R2 bucket.
+
+## 4. Verify in R2
+
+Go to the R2 bucket you created in step 1 via [the Cloudflare dashboard](https://dash.cloudflare.com/). You should see a prefix for today's date. Click through, and you will see a file created containing the JSON data you posted in step 3. You will be able to preview the file, and verify that the data you posted in step 2 is present in the file.
+
+## Summary
+
+By completing this guide, you have:
+
+- Created a Pipeline
+- Connected the Pipeline with an R2 bucket as destination.
+- Posted data to the R2 bucket via HTTP.
+- Verified the output in the R2 bucket.
+

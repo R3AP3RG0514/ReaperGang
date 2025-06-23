@@ -1,0 +1,414 @@
+---
+updated: 2025-03-31
+difficulty: Intermediate
+content_type: 📝 Tutorial
+pcx_content_type: tutorial
+title: Sending Clickstream data from client-side to Pipelines
+products:
+  - R2
+  - Workers
+tags:
+  - MotherDuck
+languages:
+  - SQL
+---
+
+import { Render, PackageManagers, Details, WranglerConfig } from "~/components";
+
+In this tutorial, you will learn how to ingest clickstream data to a R2 bucket using Pipelines. You will send this data from the client-side, that means you will make a call to the Pipelines URL directly from the client-side JavaScript code.
+
+For this tutorial, you will build a landing page of an e-commerce website. The page will list the products available for sale. A user can click on the view button to view the product details or click on the add to cart button to add the product to their cart. The focus of this tutorial is to show how to ingest the data to R2 using Pipelines from the client-side. Hence, the landing page will be a simple HTML page with no actual e-commerce functionality.
+
+## Prerequisites
+
+1. Create a [R2 bucket](/r2/buckets/create-buckets/) in your Cloudflare account.
+2. Install [`Node.js`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+
+<Details header="Node.js version manager">
+	Use a Node version manager like [Volta](https://volta.sh/) or
+	[nvm](https://github.com/nvm-sh/nvm) to avoid permission issues and change
+	Node.js versions. [Wrangler](/workers/wrangler/install-and-update/), discussed
+	later in this guide, requires a Node version of `16.17.0` or later.
+</Details>
+
+## 1. Create a new project
+
+You will create a new Worker project that will use [Static Assets](/workers/static-assets/) to serve the HTML file. While you can use any front-end framework, this tutorial uses plain HTML and JavaScript to keep things simple. If you are interested in learning how to build and deploy a web application on Workers with Static Assets, you can refer to the [Frameworks](/workers/frameworks/) documentation.
+
+Create a new Worker project by running the following commands:
+
+<PackageManagers
+	type="create"
+	pkg="cloudflare@latest"
+	args={"e-commerce-pipelines-client-side"}
+/>
+
+    <Render
+    	file="c3-post-run-steps"
+    	product="workers"
+    	params={{
+    	category: "hello-world",
+    	type: "Worker + Assets",
+    	lang: "TypeScript",
+    	}}
+    />
+
+Navigate to the `e-commerce-pipelines-client-side` directory:
+
+```sh frame="none"
+cd e-commerce-pipelines-client-side
+```
+
+## 2. Update the front-end
+
+Using Static Assets, you can serve the frontend of your application from your Worker. The above step creates a new Worker project with a default `public/index.html` file. Update the `public/index.html` file with the following HTML code:
+
+<details>
+	<summary>Select to view the HTML code</summary>
+```html 
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>E-commerce Store</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body>
+		<nav class="bg-gray-800 text-white p-4">
+			<div class="container mx-auto flex justify-between items-center">
+				<a href="/" class="text-xl font-bold"> E-Commerce Demo </a>
+				<div class="space-x-4 text-gray-800">
+					<a href="#">
+						<button class="border border-input bg-white h-10 px-4 py-2 rounded-md">Cart</button>
+					</a>
+					<a href="#">
+						<button class="border border-input bg-white h-10 px-4 py-2 rounded-md">Login</button>
+					</a>
+					<a href="#">
+						<button class="border border-input bg-white h-10 px-4 py-2 rounded-md">Signup</button>
+					</a>
+				</div>
+			</div>
+		</nav>
+		<div class="container mx-auto px-4 py-8">
+			<h1 class="text-3xl font-bold mb-6">Our Products</h1>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="products">
+				<!-- This section repeats for each product -->
+
+    			<!-- End of product section -->
+    		</div>
+    	</div>
+
+    	<script>
+    		// demo products
+    		const products = [
+    			{
+    				id: 1,
+    				name: 'Smartphone X',
+    				desc: 'Latest model with advanced features',
+    				cost: 799,
+    			},
+    			{
+    				id: 2,
+    				name: 'Laptop Pro',
+    				desc: 'High-performance laptop for professionals',
+    				cost: 1299,
+    			},
+    			{
+    				id: 3,
+    				name: 'Wireless Earbuds',
+    				desc: 'True wireless earbuds with noise cancellation',
+    				cost: 149,
+    			},
+    			{
+    				id: 4,
+    				name: 'Smart Watch',
+    				desc: 'Fitness tracker and smartwatch combo',
+    				cost: 199,
+    			},
+    			{
+    				id: 5,
+    				name: '4K TV',
+    				desc: 'Ultra HD smart TV with HDR',
+    				cost: 599,
+    			},
+    			{
+    				id: 6,
+    				name: 'Gaming Console',
+    				desc: 'Next-gen gaming system',
+    				cost: 499,
+    			},
+    		];
+
+    		// function to render products
+    		function renderProducts() {
+    			console.log('Rendering products...');
+    			const productContainer = document.getElementById('products');
+    			productContainer.innerHTML = ''; // Clear existing content
+    			products.forEach((product) => {
+    				const productElement = document.createElement('div');
+    				productElement.classList.add('rounded-lg', 'border', 'bg-card', 'text-card-foreground', 'shadow-sm');
+    				productElement.innerHTML = `
+            <div class="flex flex-col space-y-1.5 p-6">
+              <h2 class="text-2xl font-semibold leading-none tracking-tight">${product.name}</h2>
+            </div>
+            <div class="p-6 pt-0">
+              <p>${product.desc}</p>
+              <p class="font-bold mt-2">$${product.cost}</p>
+            </div>
+            <div class="flex items-center p-6 pt-0 flex justify-between">
+              <button class="border px-4 py-2 rounded-md" onclick="handleClick('product_view', ${product.id})" name="">View Details</button>
+              <button class="border px-4 py-2 rounded-md" onclick="handleClick('add_to_cart', ${product.id})">Add to Cart</button>
+            </div>
+          `;
+    				productContainer.appendChild(productElement);
+    			});
+    		}
+    		renderProducts();
+
+    		// function to handle click events
+    		async function handleClick(action, id) {
+    			console.log(`Clicked ${action} for product with id ${id}`);
+    		}
+    	</script>
+    </body>
+
+</html>
+  
+```
+</details>
+
+The above code does the following:
+
+- Uses Tailwind CSS to style the page.
+- Renders a list of products.
+- Adds a button to view the details of a product.
+- Adds a button to add a product to the cart.
+- Contains a `handleClick` function to handle the click events. This function logs the action and the product ID. In the next steps, you will create a pipeline and add the logic to send the click events to this pipeline.
+
+## 3. Create a pipeline
+
+You need to create a new pipeline and connect it to your R2 bucket.
+
+Create a new pipeline `clickstream-pipeline-client` using the [Wrangler CLI](/workers/wrangler/):
+
+```sh
+npx wrangler pipelines create clickstream-pipeline-client --r2-bucket <BUCKET_NAME> --compression none
+```
+
+Replace `<BUCKET_NAME>` with the name of your R2 bucket.
+
+When you run the command, you will be prompted to authorize Cloudflare Workers Pipelines to create R2 API tokens on your behalf. These tokens are required by your Pipeline. Your Pipeline uses these tokens when loading data into your bucket. You can approve the request through the browser link which will open automatically.
+
+:::note
+In the above command, you create a pipeline with the `--compression none` flag. This flag will prevent the pipeline from compressing the data before storing it in the R2 bucket. This is useful for testing purposes. In a production environment, you should use compression. We recommend keeping the default settings.
+:::
+
+```output
+🌀 Authorizing R2 bucket "<BUCKET_NAME>"
+Opening a link in your default browser: https://oauth.pipelines.cloudflare.com/oauth/login?accountId=<ACCOUNT_ID>&bucketName=<BUCKET_NAME>&pipelineName=clickstream-pipeline-client
+🌀 Checking access to R2 bucket "<BUCKET_NAME>"
+🌀 Creating Pipeline named "clickstream-pipeline-client"
+✅ Successfully created Pipeline "clickstream-pipeline-client" with id <PIPELINE_ID>
+🎉 You can now send data to your Pipeline!
+
+To start interacting with this Pipeline from a Worker, open your Worker’s config file and add the following binding configuration:
+
+{
+  "pipelines": [
+    {
+      "pipeline": "clickstream-pipeline-client",
+      "binding": "PIPELINE"
+    }
+  ]
+}
+
+Send data to your Pipeline's HTTP endpoint:
+
+	curl "https://<PIPELINE_ID>.pipelines.cloudflare.com" -d '[{"foo": "bar"}]'
+```
+
+Make a note of the URL of the pipeline. You will use this URL to send the clickstream data from the client-side.
+
+## 4. Generate clickstream data
+
+You need to send clickstream data like the `timestamp`, `user_id`, `session_id`, and `device_info` to your pipeline. You can generate this data on the client side. Add the following function in the `<script>` tag in your `public/index.html`. This function gets the device information:
+
+```js title="public/index.html"
+function extractDeviceInfo(userAgent) {
+	let browser = "Unknown";
+	let os = "Unknown";
+	let device = "Unknown";
+
+	// Extract browser
+	if (userAgent.includes("Firefox")) {
+		browser = "Firefox";
+	} else if (userAgent.includes("Chrome")) {
+		browser = "Chrome";
+	} else if (userAgent.includes("Safari")) {
+		browser = "Safari";
+	} else if (userAgent.includes("Opera") || userAgent.includes("OPR")) {
+		browser = "Opera";
+	} else if (userAgent.includes("Edge")) {
+		browser = "Edge";
+	} else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) {
+		browser = "Internet Explorer";
+	}
+
+	// Extract OS
+	if (userAgent.includes("Win")) {
+		os = "Windows";
+	} else if (userAgent.includes("Mac")) {
+		os = "MacOS";
+	} else if (userAgent.includes("Linux")) {
+		os = "Linux";
+	} else if (userAgent.includes("Android")) {
+		os = "Android";
+	} else if (userAgent.includes("iOS")) {
+		os = "iOS";
+	}
+
+	// Extract device
+	const mobileKeywords = [
+		"Android",
+		"webOS",
+		"iPhone",
+		"iPad",
+		"iPod",
+		"BlackBerry",
+		"Windows Phone",
+	];
+	device = mobileKeywords.some((keyword) => userAgent.includes(keyword))
+		? "Mobile"
+		: "Desktop";
+
+	return { browser, os, device };
+}
+```
+
+## 5. Send clickstream data to your pipeline
+
+You will send the clickstream data to the pipline from the client-side. To do that, update the `handleClick` function to make a `POST` request to the pipeline URL with the data. Replace `<PIPELINE_URL>` with the URL of your pipeline.
+
+```js title="public/index.html" ins={3-40}
+async function handleClick(action, id) {
+	console.log(`Clicked ${action} for product with id ${id}`);
+
+	const userAgent = window.navigator.userAgent;
+	const timestamp = new Date().toISOString();
+	const { browser, os, device } = extractDeviceInfo(userAgent);
+
+	const data = {
+		timestamp,
+		session_id: "1234567890abcdef", // For production use a unique session ID
+		user_id: "user" + Math.floor(Math.random() * 1000), // For production use a unique user ID
+		event_data: {
+			event_id: Math.floor(Math.random() * 1000),
+			event_type: action,
+			page_url: window.location.href,
+			timestamp,
+			product_id: id,
+		},
+		device_info: {
+			browser,
+			os,
+			device,
+			userAgent,
+		},
+		referrer: document.referrer,
+	};
+	try {
+		const response = await fetch("<PIPELINE_URL>", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify([data]),
+		});
+		if (!response.ok) {
+			throw new Error("Failed to send data to pipeline");
+		}
+	} catch (error) {
+		console.error("Error sending data to pipeline:", error);
+	}
+}
+```
+
+The `handleClick` function does the following:
+
+- Gets the device information using the `extractDeviceInfo` function.
+- Makes a `POST` request to the pipeline with the data.
+- Logs any errors that occur.
+
+If you start the development server and open the application in the browser, you can see the `handleClick` function gets executed when you click on the `View Details` or `Add to Cart` button.
+
+```sh
+npm run dev
+```
+
+However, no data gets sent to the pipeline. Inspect the browser console to view the error message. The error message you see is for [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS). In the next step, you will update the CORS settings to allow the client-side JavaScript to send data to the pipeline.
+
+## 6. Update CORS settings
+
+By default, the Pipelines endpoint does not allow cross-origin requests. You need to update the CORS settings to allow the client-side JavaScript to send data to the pipeline. To update the CORS settings, execute the following command:
+
+```sh
+npx wrangler pipelines update clickstream-pipeline-client --cors-origins http://localhost:8787
+```
+
+Now when you run the development server and open the application in the browser, you will see the clickstream data being sent to the pipeline when you click on the `View Details` or `Add to Cart` button. You can also see the data in the R2 bucket.
+
+You can learn more about the CORS settings in the [Specifying CORS settings](/pipelines/sources/http/#specifying-cors-settings) documentation.
+
+## 7. Deploy the application
+
+To deploy the application, run the following command:
+
+```sh
+npm run deploy
+```
+
+This will deploy the application to the Cloudflare Workers platform.
+
+```output
+🌀 Building list of assets...
+🌀 Starting asset upload...
+🌀 Found 1 new or modified static asset to upload. Proceeding with upload...
++ /index.html
+Uploaded 1 of 1 assets
+✨ Success! Uploaded 1 file (2.37 sec)
+
+Total Upload: 25.73 KiB / gzip: 6.17 KiB
+Worker Startup Time: 15 ms
+Uploaded e-commerce-pipelines-client-side (11.79 sec)
+Deployed e-commerce-pipelines-client-side triggers (7.60 sec)
+  https://<URL>.workers.dev
+Current Version ID: <VERSION_ID>
+```
+
+Update the CORS settings to add the deployed URL. Replace `<URL>` with the URL provided in the output of the deploy command.
+
+```sh
+npx wrangler pipelines update clickstream-pipeline-client --cors-origins https://<URL>.workers.dev
+```
+
+You can access the application at the deployed URL. When you click on the `View Details` or `Add to Cart` button, the clickstream data will be sent to your pipeline.
+
+## 8. View the data in R2
+
+You can view the data in the R2 bucket. If you are not signed in to the Cloudflare dashboard, sign in and navigate to the R2 overview page.
+
+Open the bucket you configured for your pipeline in Step 3. You can see the clickstream data in the `Objects` column.
+
+## Conclusion
+
+You have successfully created a Pipeline and used it to send clickstream data from the client. Through this tutorial, you've gained hands-on experience in:
+
+1. Creating a Workers project with a static frontend
+2. Generating and capturing clickstream data
+3. Setting up a Cloudflare Pipelines to ingest data into R2
+4. Deploying the application to Workers
+
+For your next steps, consider connecting your R2 bucket to MotherDuck to analyse the data. You can follow the instructions in the [Analyzing Clickstream Data with MotherDuck and Cloudflare R2](/pipelines/tutorials/query-data-with-motherduck#7-connect-the-r2-bucket-to-motherduck) tutorial to connect your R2 bucket to MotherDuck and analyse data.
+
+You can find the source code of the application in the [GitHub repository](https://github.com/harshil1712/e-commerce-pipelines-client-side).

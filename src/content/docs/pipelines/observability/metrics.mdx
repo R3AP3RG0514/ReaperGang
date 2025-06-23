@@ -1,0 +1,66 @@
+---
+pcx_content_type: concept
+title: Metrics
+sidebar:
+  order: 10
+
+---
+
+Pipelines metrics are split across three different nodes under `viewer` > `accounts`. Refer to [Explore the GraphQL schema](/analytics/graphql-api/getting-started/explore-graphql-schema/) to learn how to navigate a GraphQL schema and discover which data are available.
+
+To learn more about the GraphQL Analytics API, refer to [GraphQL Analytics API](/analytics/graphql-api/).
+
+You can use the GraphQL API to measure metrics for data ingested, as well as data delivered.
+
+## Write GraphQL queries
+
+Examples of how to explore your Pipelines metrics.
+
+### Measure total bytes & records ingested over time period
+
+```graphql
+query PipelineIngestion($accountTag: string!, $pipelineId: string!, $datetimeStart: Time!, $datetimeEnd: Time!) {
+  viewer {
+    accounts(filter: {accountTag: $accountTag}) {
+      pipelinesIngestionAdaptiveGroups(
+        limit: 10000
+        filter: {
+          pipelineId: $pipelineId
+          datetime_geq: $datetimeStart
+          datetime_leq: $datetimeEnd
+          }
+
+        )
+      {
+        sum {
+          ingestedBytes,
+          ingestedRecords,
+        }
+      }
+    }
+  }
+}
+```
+
+### Measure volume of data delivered
+
+```graphql
+query PipelineDelivery($accountTag: string!, $queueId: string!, $datetimeStart: Time!, $datetimeEnd: Time!) {
+  viewer {
+    accounts(filter: {accountTag: $accountTag}) {
+      pipelinesDeliveryAdaptiveGroups(
+        limit: 10000
+        filter: {
+          pipelineId: $queueId
+          datetime_geq: $datetimeStart
+          datetime_leq: $datetimeEnd
+        }
+      ) {
+        sum {
+          deliveredBytes,
+        }
+      }
+    }
+  }
+}
+```
