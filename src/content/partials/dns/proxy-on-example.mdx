@@ -1,0 +1,6 @@
+---
+{}
+
+---
+
+When a browser initiates an HTTP/HTTPS request to `blog.example.com`, a DNS resolver will convert the hostname into an IP address. Since this domain is using Cloudflare as its authoritative DNS provider, the DNS query will be routed to Cloudflare; and because the proxy is on, Cloudflare will answer with an anycast IP address. Subsequently, the browser initiates an HTTP/HTTPS request back to Cloudflare. When Cloudflare receives this request, it performs a lookup to find the matching domain and account configuration and processes the request accordingly. When needed, Cloudflare forwards the request to the configured origin server, which is `192.0.2.1`.

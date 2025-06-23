@@ -1,0 +1,56 @@
+---
+pcx_content_type: reference
+title: Proxied DNS records
+sidebar:
+  order: 2
+  label: Proxied records
+---
+
+import { Render, Details, Example, GlossaryTooltip } from "~/components";
+
+:::caution[TEMP WIP NOTE]
+Not too sure about the name. The idea would be to document any "expected behavior" for proxied records here
+
+More details of how the DNS record proxy status interacts with other Cloudflare configurations. Besides content below (pulled from previously existing page), things like O2O, BYOIP address maps, etc, could go here.
+:::
+
+The sections below describe specific behaviors and expected outcomes when you have DNS records set to <GlossaryTooltip term="proxy status">proxied</GlossaryTooltip>. For further context, refer to [About proxying](/dns/proxy-status/about-proxying/).
+
+## Predefined time to live
+
+
+By default, all [proxied records](/dns/proxy-status/about-proxying/#proxied-records) have a time to live (TTL) of **Auto**, which is set to 300 seconds.
+
+Since only [IP resolution records](/dns/manage-dns-records/reference/dns-record-types/#ip-address-resolution) can be proxied, this setting ensures that queries to your domain name resolve fairly quickly. This setting also means that any changes to proxied A, AAAA, or CNAME records will take place within five minutes or less.
+
+:::note
+It may take longer than five minutes for you to actually experience record changes, as your local DNS cache may take longer to update.
+:::
+
+## Mix proxied and unproxied
+
+If you have multiple A or AAAA records on the same name and at least one of them is proxied, Cloudflare will treat all A or AAAA records on this name as being proxied.
+
+<Details header="Example">
+
+<Example>
+DNS management for **example.com**:
+
+| Type | Name    | Content      | Proxy status | TTL    |
+| ---- | ------- | ------------ | ------------ | ------ |
+| A    | `blog`  | `192.0.2.1`  | Proxied      | Auto   |
+| A    | `blog`  | `192.0.2.5`  | DNS only     | Auto   |
+
+In this example, all traffic intended for `blog.example.com` will be treated as if both records were [proxied](/dns/proxy-status/about-proxying/#proxied-records).
+
+</Example>
+
+</Details>
+
+## Protocol optimization
+
+For proxied records, if your domain has [HTTP/2 or HTTP/3 enabled](/speed/optimization/protocol/), Cloudflare automatically generates corresponding [HTTPS Service (HTTPS) records](/dns/manage-dns-records/reference/dns-record-types/#svcb-and-https) on the fly. HTTPS records allow you to provide a client with information about how it should connect to a server upfront, without the need of an initial plaintext HTTP connection.
+
+:::note
+Both HTTP/2 and HTTP/3 configurations also require that you have an SSL/TLS certificate served by Cloudflare. This means that disabling [Universal SSL](/ssl/edge-certificates/universal-ssl/), for example, could impact this behavior.
+:::

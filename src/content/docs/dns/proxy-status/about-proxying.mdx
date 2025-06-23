@@ -1,0 +1,72 @@
+---
+pcx_content_type: concept
+title: About proxying
+sidebar:
+  order: 2
+  label: About
+---
+
+import { Render, Example } from "~/components";
+
+While your [DNS records](/dns/manage-dns-records/) are used to make your website or application available to visitors and other web services, the **Proxy status** of a DNS record is used to define how Cloudflare treats incoming traffic to that record.
+
+The records you can proxy through Cloudflare are [IP address resolution records](/dns/manage-dns-records/reference/dns-record-types/#ip-address-resolution) — meaning A, AAAA, or CNAME records.
+
+Proxying is on by default (for the applicable records) when you onboard a domain via the dashboard. Cloudflare recommends setting to proxied all A, AAAA, and CNAME records that are used for serving web traffic.
+
+### Proxied records
+
+When you set a DNS record to **Proxied**, Cloudflare can:
+
+- Protect your origin server from [DDoS attacks](https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/).
+- [Optimize, cache, and protect](/fundamentals/setup/manage-domains/connect-your-domain/#domain-configurations) all requests to your application.
+- Apply your configurations for a variety of [Cloudflare products](/dns/proxy-status/cloudflare-configuration/).
+
+Apart from that, proxied DNS records have specific predefined fields and expected behavior — refer to [Proxied records](/dns/manage-dns-records/proxy-status/proxied-records/) for details.
+
+To understand how Cloudflare responds to requests for proxied records, consider [How proxying works](/dns/proxy-status/about-proxying/#how-proxying-works) below.
+
+### DNS-only records
+
+When an A, AAAA, or CNAME record is **DNS-only** (also known as being gray-clouded), DNS queries for this record will resolve to the record's normal IP address.
+
+In addition to potentially exposing your origin IP addresses to bad actors and [DDoS attacks](https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/), leaving your records as **DNS-only** means that:
+
+- Cloudflare cannot [optimize, cache, and protect](/fundamentals/setup/manage-domains/connect-your-domain/#domain-configurations) requests to your domain.
+- Cloudflare cannot provide analytics on those requests.
+- Your configuration for a variety of [Cloudflare products](/dns/proxy-status/cloudflare-configuration/) will not be applied.
+
+---
+
+## How proxying works
+
+When you set a DNS record to **Proxied**, Cloudflare responds with an [anycast IP address](/fundamentals/concepts/cloudflare-ip-addresses/) **instead of** the value defined on your [DNS table](/dns/manage-dns-records/#dns-records-table). This means that all requests intended for proxied hostnames will go to Cloudflare first and then be forwarded to your origin server.
+
+<Render file="proxy-status-dns-table" />
+
+### Proxied record example
+
+<Render file="proxy-on-example" />
+
+### DNS-only record example
+
+<Render file="proxy-off-example" />
+
+---
+
+## IP addresses
+
+Because requests to proxied records go through Cloudflare before reaching your origin server, traditionally all requests will appear to be coming from Cloudflare's IP addresses and could be blocked or rate limited. Refer to [allow Cloudflare IPs](/fundamentals/concepts/cloudflare-ip-addresses/) to learn how to adjust your server configuration.
+
+```mermaid
+flowchart LR
+accTitle: Connections with Cloudflare
+A[Client] <-- Connection --> B[Cloudflare global network] <-- Connection --> C[Origin server]
+```
+
+Cloudflare anycast IPs used to proxy traffic on your domain are assigned automatically and can change at any time for operational reasons. By default, if you need to allowlist Cloudflare IPs on your infrastructure or hosting provider, you should include the full list of [Cloudflare anycast IPs](https://www.cloudflare.com/ips/).
+
+Alternatively, if you are an Enterprise customer, you have the following options:
+
+- [Cloudflare Aegis](/aegis/) allows you to get dedicated IPs for the connection between Cloudflare and your origin server, meaning you only have to allowlist a small number of IPs.
+- [Static IPs](/byoip/concepts/static-ips/) or [bring your own IPs (BYOIP)](/byoip/) allow you to specify what IPs should be used in the connection between clients and Cloudflare.
