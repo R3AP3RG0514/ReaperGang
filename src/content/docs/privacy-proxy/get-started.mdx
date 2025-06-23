@@ -1,0 +1,45 @@
+---
+title: Get started
+pcx_content_type: get-started
+sidebar:
+  order: 2
+head:
+  - tag: title
+    content: Get started with Cloudflare Privacy Proxy
+    Description: Get started with Cloudflare Privacy Proxy
+---
+## Environments
+
+Cloudflare will provide access to both development and production environments.
+Credentials are shared across both environments.
+
+<table-wrap>
+
+| **Environment**   | **Endpoint**                     | **Description**                                                                                 |
+|-------------------|----------------------------------|-------------------------------------------------------------------------------------------------|
+| Dev token issuer  | `test-pat.issuer.cloudflare.com` | Development token issuance environment - Use for internal development, integration testing, and end-to-end validation. Cloudflare recommends the Go, Rust, and TypeScript implementations of RFC 9578, and provides a [test website](https://pepe-debug.research.cloudflare.com/) to test your attester against. |
+| Dev Privacy Proxy | `test-proxy.cloudflare.com`    | Development proxy environment – This is subject to change and Cloudflare recommends making this configuration dynamic to support multiple environments, including canary releases and internal employee testing. |
+
+</table-wrap>
+
+:::note
+
+Any load testing needs to be communicated to Cloudflare in advance, regardless of environment. Both environments run on the Cloudlfare global production edge network and do not differentiate on network topology or prioritization.
+
+:::
+
+### Proxy authentication
+
+The Privacy Proxy Ingress service authenticates to clients using standard WebPKI-based X.509 certificates in TLS, with a certificate rooted in DigiCert.
+
+### Example client code
+
+Cloudflare will provide access to a MASQUE client, which can be used in mobile client code to connect to the MASQUE proxy provided by Cloudflare. For example:
+
+```sh
+cargo run --bin quiche-client -- \
+  --no-verify \
+  --connect-to test-proxy.cloudflare.com \
+  --connect-type=HTTP \
+  https://example.com
+```

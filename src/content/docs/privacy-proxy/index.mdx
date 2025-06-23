@@ -1,0 +1,66 @@
+---
+pcx_content_type: overview
+title: Overview
+type: overview
+sidebar:
+  order: 1
+head:
+  - tag: title
+    content: Cloudflare Privacy Proxy
+---
+
+import { Description, Plan } from "~/components"
+
+<Plan type="all" />
+
+<Description>
+The Cloudflare Privacy Proxy consists of a generic HTTPS CONNECT (and CONNECT-UDP ) proxy.
+The Cloudflare Privacy Proxy consists of a generic HTTPS CONNECT (and CONNECT-UDP) proxy that protects sensitive network level metadata from being exposed to third parties.
+
+A high-level overview of how the Prixacy Proxy works is shown below. Control plane services are shown in orange. Dataplane services are shown in blue.
+
+![Privacy Proxy system overview](~/assets/images/privacy-proxy/privacy-proxy-system-overview.png)
+</Description>
+
+## Features
+The following components comprise the Privacy Proxy system:
+
+- **Client**: The end-user making HTTP requests via the Privacy Proxy from within a web browser and/or other supported client.
+- **Attester**: The client-facing service that authenticates the validity of end-user accounts, validates entitlements, and requests a Private Access Token (PAT) from the issuer on behalf of the end user. Not operated by Cloudflare.
+- **Privacy API**: Cloudflare service that issues PATs to the client for redemption against the Privacy Proxy service. Cloudflare Privacy Proxy mints Private Access Tokens (PATs) using the RSA blind signature protocol.
+- **Privacy Proxy**: The HTTP CONNECT-based proxy service running on Cloudflare's edge. The Privacy Proxy validates the PAT passed by the client, proxies the HTTP request, and selects an IP address to egress with.
+- **Origin**: The external (target) website for the end-user request.
+
+DNS resolution uses [Cloudflare's public resolver (1.1.1.1)](/1.1.1.1/) infrastructure for name resolution.
+
+## Privacy Proxy architecture
+
+![System architecture](~/assets/images/privacy-proxy/system-architecture.png)
+
+## Client initialization
+
+A client requires configuration data (the region public key) to request tokens. The region public key is used to initialize the request for blinded tokens from the Privacy API.
+
+The client should periodically refresh the region-based public key public key, especially after IP address changes, since Cloudflare will use the IP address to map to the region.
+
+The region public key should be kept in the client session across multiple requests.
+
+![Client initialization](~/assets/images/privacy-proxy/client-initialization.png)
+
+## Token issuance
+
+After the client is configured, it will need privacy tokens in order to make requests.
+
+When the Private Access Token (PAT) pool is low/empty, the client can use the stored region public key to create a batch of new blinded token requests to send to the Privacy API through the Token Proxy.
+
+The Privacy API signs the Private Access Tokens (PAT) and returns them to the client, which can store them in a pool for later use.
+
+![Token issuance](~/assets/images/privacy-proxy/token-issuance.png)
+
+## HTTP (Web) request flow
+
+Once the client needs to make a connection to a new server, the client can connect to the Cloudflare Proxy service and request a connection to the origin with a Private Access Token (PAT) in the ` Proxy-Authorization ` HTTP request header.
+
+This connection can be kept alive for multiple requests/responses from the server.
+
+![HTTP request flow](~/assets/images/privacy-proxy/http-request-flow.png)
