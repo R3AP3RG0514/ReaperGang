@@ -1,0 +1,57 @@
+---
+title: How to
+pcx_content_type: how-to
+sidebar:
+  order: 2
+---
+
+Refer to the sections below to learn about common actions you might want to take when managing your data in Secrets Store.
+
+You must have a [Super Administrator or Secrets Store Admin role](/secrets-store/access-control/) within your Cloudflare account.
+
+## Create a secret
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
+2. Go to **Secrets Store** and select **Create secret**.
+3. Fill in the required fields. Note that, once the secret is saved, the secret value will no longer be available for viewing.
+4. (Optional) Select **Add additional secret** to create more than one secret at a time.
+5. Select **Save** to confirm
+
+## Duplicate a secret
+
+Duplicate a secret to keep the same secret value but change name, scope, or comments.
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
+2. Go to **Secrets Store**.
+3. Search for the secret you would like to duplicate within the existing secrets list.
+4. Select the three dots next to the secret and choose **Duplicate**.
+5. Edit the **Secret name**, **Permission scope**, or **Comment**, according to your needs.
+6. Select **Save** to confirm.
+
+## Edit a secret
+
+Edit a secret to replace an existing value with a new one.
+
+:::caution
+This action will cause the replacement in all services using the secret.
+:::
+
+You can also edit the secret **Permission scope** and **Comment**.
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
+2. Go to **Secrets Store**.
+3. Search for the secret you would like to edit within the existing secrets list.
+4. Select the three dots next to the secret and choose **Edit**.
+5. Edit the available fields according to your needs and select **Save** to confirm.
+
+## Delete a secret
+
+:::caution
+Before deleting a secret, make sure it is not deployed. Secrets Store secrets in use are listed in the respective [Workers application](https://dash.cloudflare.com/?to=/:account/workers-and-pages/) under **Settings** > **Bindings**.
+:::
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
+2. Go to **Secrets Store**.
+3. Search for the secret you would like to delete within the existing secrets list.
+4. Select the three dots next to the secret and choose **Delete**.
+5. Type in the secret name and select **Delete** to confirm.
