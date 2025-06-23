@@ -1,0 +1,79 @@
+---
+pcx_content_type: configuration
+title: Set up Prompts
+sidebar:
+  order: 8
+---
+
+## How to create a prompt
+
+Creating prompts in AI Gateway is done via the Cloudflare Dashboard.
+
+### Using the Dashboard:
+
+1.  Log into the [Cloudflare dashboard](https://dash.cloudflare.com/) and select your account.
+
+2.  Go to the **Prompts** tab.
+
+3.  Create a new prompt:
+
+    - Click on the **New Prompt** button.
+    - Provide the following details:
+      - Prompt name: A unique name to identify the prompt.
+      - Prompt copy: The instructions or text for the AI model.
+      - Tags: (Optional) Add tags to organize and search prompts easily.
+
+4.  Save the Prompt:
+
+    - Click **Create Prompt** to store your prompt.
+
+    :::note[Note]
+
+    Creating a new prompt will also generate a new prompt version. By default, this new version will be set as the active version and used to process requests made to the Gateway.
+
+    :::
+
+5.  Copy the code snippet:
+    - After saving, a code snippet will be available:
+
+```
+curl https://gateway.ai.cloudflare.com/v1/0d37909e38d3e99c29fa2cd343ac421a/{gateway_id}/workers-ai/@cf/meta/llama-3.1-8b-instruct \
+  --header 'Authorization: Bearer {cf_api_token}' \
+  --header 'Content-Type: application/json' \
+  --data '{"prompt": "<cf-aig-prompt id=\"workers-ai-prompt\"/>"}'
+```
+
+- Test this prompt by sending the cURL request or copying the snippet to add directly to your code.
+
+5. Prompt ID:
+   - Here is an example of the prompt ID generated:
+
+```
+<cf-aig-prompt id="workers-ai-prompt"/>
+```
+
+6. Confirmation:
+   - A success page will confirm that your prompt has been created.
+
+## Managing Prompt versions
+
+AI Gateway allows you to maintain prompt versions to test changes and roll back if needed.
+
+1. Create a new version:
+
+   - Make changes to an existing prompt (for example tweak wording).
+   - Save the changes as a new version.
+   - By default, the newly saved version will become the active version.
+
+2. Track versions:
+
+   - The dashboard shows all versions, indicating which is active and which are older.
+   - Compare versions to see changes and their impact by ticking the `show diff` box.
+
+3. Version control benefits:
+
+   - Easily roll back to a previous version if a new prompt doesn't perform well.
+
+4. Search and tagging:
+
+- Quickly find prompts by searching names or filtering by tags.
