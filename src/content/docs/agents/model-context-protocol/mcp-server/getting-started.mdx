@@ -1,0 +1,86 @@
+---
+pcx_content_type: concept
+title: Getting Started
+sidebar:
+  order: 2
+---
+
+import { Details, Render, PackageManagers } from "~/components";
+
+# Deploy an MCP Server to Cloudflare
+
+You can build and deploy MCP servers on Cloudflare, using the `@cloudflare/model-context-protocol` package, which provides an SDK for [authorization](/agents/model-context-protocol/mcp-server/authorization/), [transport](/agents/model-context-protocol/mcp-server/transport/), and [tool definition and discovery](/agents/model-context-protocol/mcp-server/tools/).
+
+This guide and the accompanying [examples](/agents/model-context-protocol/mcp-server/examples/) will help you get started.
+
+### What is the Model Context Protocol (MCP)?
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that connects AI systems with external applications. Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect your devices to various accessories, MCP provides a standardized way to connect AI agents to different services.
+
+#### MCP Terminology
+
+- **MCP Hosts**: AI assistants (like [Claude](http://claude.ai) or [Cursor](http://cursor.com)), AI agents, or applications that need to access external capabilities.
+- **MCP Clients**: Clients embedded within the MCP hosts that connect to MCP servers and invoke tools. Each MCP client instance has a single connection to an MCP server.
+- **MCP Servers**: Applications that expose [tools](/agents/model-context-protocol/mcp-server/tools/), [prompts](https://modelcontextprotocol.io/docs/concepts/prompts), and [resources](https://modelcontextprotocol.io/docs/concepts/resources) that MCP clients can use.
+
+#### Remote vs. local MCP connections
+
+The MCP standard supports two modes of operation:
+
+- **Remote MCP connections**: MCP clients connect to MCP servers over the Internet, establishing a [long-lived connection using HTTP and Server-Sent Events (SSE)](/agents/model-context-protocol/mcp-server/transport/), and authorizing the MCP client access to resources on the user's account using [OAuth](/agents/model-context-protocol/mcp-server/authorization/).
+- **Local MCP connections**: MCP clients connect to MCP servers on the same machine, using [stdio](https://spec.modelcontextprotocol.io/specification/draft/basic/transports/#stdio) as a local transport method.
+
+Cloudflare's MCP Server SDK, is designed to support remote MCP connections. Remote MCP connections allow MCP clients that run in web browsers, mobile apps, and other environments outside of the end-user's machine to connect to your MCP server, such as [Claude.ai](https://www.anthropic.com/claude), and other AI agents.
+
+## Your first MCP server
+
+The button below will take you to the Cloudflare dashboard, create a new Worker and an associated git repository with code for an MCP server, and deploy the Worker to your Cloudflare account.
+
+{/* TODO: Update deploy to Workers button */}
+[![Deploy to Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/mcp-server-example)
+
+You can also do this using the command line as shown below.
+
+### Get Started — command line with Wrangler CLI
+
+{/* TODO: Update path to example */}
+
+<PackageManagers
+	type="create"
+	pkg="cloudflare@latest"
+	args={"my-mcp-server --template=geelen/mcp-remote-examples/02-user-password"}
+/>
+
+Now, you have a new project set up. Move into that project folder.
+
+```sh
+cd my-mcp-server
+```
+
+Then, start the development server:
+
+```sh
+npm start
+```
+
+In a new terminal, run the [MCP inspector](https://github.com/modelcontextprotocol/mcp-inspector). The MCP inspector is an interactive MCP client that allows you to connect to your MCP server and invoke tools from a web browser..
+
+```sh
+npx @modelcontextprotocol/inspector@latest
+```
+
+```sh
+open http://localhost:5173
+```
+
+In the inspector, enter the URL of your MCP server, and click **Connect**:
+
+![MCP inspector — where to enter the URL of your MCP server](~/assets/images/agents/mcp-inspector-enter-url.png)
+
+You will be redirected to an example OAuth login page. Enter any username and password and click "Log in and approve" to continue. (in the next section, you will add your own authentication and/or authorization provider to replace this)
+
+![MCP OAuth Login Page](~/assets/images/agents/mcp-demo-oauth-flow.png)
+
+Once you have logged in, you will be redirected back to the inspector. You should see the "List Tools" button, which will list the tools that your MCP server exposes.
+
+![MCP inspector — authenticated](~/assets/images/agents/mcp-inspector-authenticated.png)
