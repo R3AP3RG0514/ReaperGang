@@ -1,0 +1,126 @@
+---
+pcx_content_type: get-started
+title: Reuse sessions with geolocation
+sidebar:
+  order: 4
+---
+
+import { Render, PackageManagers, WranglerConfig } from "~/components";
+
+This guide explains how to build a Cloudflare Worker that renders a web page using a fork of Puppeteer. Each request launches a new browser session (with the session location set to Afghanistan in this case) to navigate to the specified URL and return the HTML content of the page.
+
+## 1. Create a Worker project
+
+[Cloudflare Workers](/workers/) provides a serverless execution environment that allows you to create new applications or augment existing ones without configuring or maintaining infrastructure. Your Worker application is a container to interact with a headless browser to do actions, such as taking screenshots.
+
+Create a new Worker project named `browser-worker` by running:
+
+<PackageManagers
+	type="create"
+	pkg="cloudflare@latest"
+	args={"browser-worker"}
+/>
+
+<Render
+	file="c3-post-run-steps"
+	product="workers"
+	params={{
+		category: "hello-world",
+		type: "Worker only",
+		lang: "TypeScript",
+	}}
+/>
+
+## 2. Install Puppeteer
+
+In your `browser-worker` directory, install Cloudflare's [fork of Puppeteer](/browser-rendering/platform/puppeteer/):
+
+```sh
+npm install @cloudflare/puppeteer --save-dev
+```
+
+## 3. Configure the [Wrangler configuration file](/workers/wrangler/configuration/)
+
+<WranglerConfig>
+```toml
+name = "browser-worker"
+main = "src/index.ts"
+compatibility_date = "2023-03-14"
+compatibility_flags = [ "nodejs_compat" ]
+
+browser = { binding = "MYBROWSER" }
+
+````
+</WranglerConfig>
+
+The binding `MYBROWSER` allows the Worker to interact with the headless browser.
+
+## 4. Implement the Worker Code
+
+Replace your default code with the following updated script. This code launches a new browser session for every request, sets the session’s location to Afghanistan, navigates to the provided URL, and returns the HTML content of the page.
+
+```ts
+
+import puppeteer from "@cloudflare/puppeteer";
+
+export default {
+    async fetch(request, env, ctx): Promise<Response> {
+        const { searchParams } = new URL(request.url);
+        let url = searchParams.get('url');
+        let html;
+        if (url) {
+            url = new URL(url).toString(); // Normalize the URL
+            // Launch a new browser session with the location set to Afghanistan ('AF')
+            const browser = await puppeteer.launch(env.MYBROWSER, { location: 'AF' });
+            const page = await browser.newPage();
+            await page.goto(url);
+            html = await page.content();
+            await browser.close();
+            return new Response(html);
+        } else {
+            return new Response('Please add an ?url=https://example.com/ parameter');
+        }
+    },
+} satisfies ExportedHandler<Env>;
+```
+
+### Key points
+
+- Session management:
+  A new browser session is launched for every incoming request. The session is automatically closed after retrieving the page content.
+
+- Location specification:
+  The browser session is configured to run with a location parameter set to `'AF'` (Afghanistan).
+
+- URL validation:
+  The script checks for a valid URL in the query string, normalizes it, and handles the case where the URL is not provided.
+
+## 5. Test the Worker
+
+Since local testing for browser rendering is not supported, run your Worker remotely by executing:
+
+```sh
+npx wrangler dev --remote
+```
+
+Test the Worker by navigating to the following URL (replace `<LOCAL_HOST_URL>` with the appropriate endpoint):
+
+```sh
+<LOCAL_HOST_URL>/?url=https://example.com
+```
+
+## 6. Deploy the Worker
+
+After testing, deploy your Worker to Cloudflare’s global network with:
+
+```sh
+npx wrangler deploy
+```
+
+Once deployed, your Worker will be accessible at:
+
+```sh
+
+<YOUR_WORKER>.<YOUR_SUBDOMAIN>.workers.dev/?url=https://example.com```
+
+```
