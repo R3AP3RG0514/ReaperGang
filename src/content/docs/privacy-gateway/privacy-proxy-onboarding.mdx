@@ -1,0 +1,322 @@
+---
+title: Privacy Proxy Onboarding Guide
+pcx_content_type: how-to
+sidebar:
+  order: 3
+
+---
+
+## System overview
+
+The Cloudflare Privacy Proxy consists of a generic HTTPS CONNECT (and CONNECT-UDP ) proxy.
+The Cloudflare Privacy Proxy consists of a generic HTTPS CONNECT (and CONNECT-UDP) proxy that protects sensitive network level metadata from being exposed to third parties.
+
+A high-level overview of how the Prixacy Proxy works is shown below. Control plane services are shown in orange. Dataplane services are shown in blue.
+
+![Privacy Proxy system overview](~/assets/images/privacy-gateway/privacy-proxy-system-overview.png)
+
+The following components comprise the Privacy Proxy system:
+
+- **Client**: The end-user making HTTP requests via the Privacy Proxy from within a web browser and/or other supported client.
+- **Attester**: The client-facing service that authenticates the validity of end-user accounts, validates entitlements, and requests a Private Access Token (PAT) from the issuer on behalf of the end user. Not operated by Cloudflare.
+- **Privacy API**: Cloudflare service that issues PATs to the client for redemption against the Privacy Proxy service. Cloudflare Privacy Proxy mints Private Access Tokens (PATs) using the RSA blind signature protocol.
+- **Privacy Proxy**: The HTTP CONNECT-based proxy service running on Cloudflare's edge. The Privacy Proxy validates the PAT passed by the client, proxies the HTTP request, and selects an IP address to egress with.
+- **Origin**: The external (target) website for the end-user request.
+
+DNS resolution uses [Cloudflare's public resolver (1.1.1.1)](/1.1.1.1/) infrastructure for name resolution.
+
+### Privacy Proxy architecture
+
+![System architecture](~/assets/images/privacy-gateway/system-architecture.png)
+
+### Client initialization
+
+A client requires configuration data (the region public key) to request tokens. The region public key is used to initialize the request for blinded tokens from the Privacy API.
+
+The client should periodically refresh the region-based public key public key, especially after IP address changes, since Cloudflare will use the IP address to map to the region.
+
+The region public key should be kept in the client session across multiple requests.
+
+![Client initialization](~/assets/images/privacy-gateway/client-initialization.png)
+
+### Token issuance
+
+After the client is configured, it will need privacy tokens in order to make requests.
+
+When the Private Access Token (PAT) pool is low/empty, the client can use the stored region public key to create a batch of new blinded token requests to send to the Privacy API through the Token Proxy.
+
+The Privacy API signs the Private Access Tokens (PAT) and returns them to the client, which can store them in a pool for later use.
+
+![Token issuance](~/assets/images/privacy-gateway/token-issuance.png)
+
+### Example client code
+
+Cloudflare will provide access to a MASQUE client, which can be used in mobile client code to connect to the MASQUE proxy provided by Cloudflare. For example:
+
+```sh
+cargo run --bin quiche-client -- \
+  --no-verify \
+  --connect-to test-proxy.cloudflare.com \
+  --connect-type=HTTP \
+  https://example.com
+```
+
+### HTTP (Web) request flow
+
+Once the client needs to make a connection to a new server, the client can connect to the Cloudflare Proxy service and request a connection to the origin with a Private Access Token (PAT) in the ` Proxy-Authorization ` HTTP request header.
+
+This connection can be kept alive for multiple requests/responses from the server.
+
+![HTTP request flow](~/assets/images/privacy-gateway/http-request-flow.png)
+
+## Environments
+
+Cloudflare will provide access to both development and production environments.
+Credentials are shared across both environments.
+
+<table-wrap>
+
+| **Environment**   | **Endpoint**                     | **Description**                                                                                 |
+|-------------------|----------------------------------|-------------------------------------------------------------------------------------------------|
+| Dev token issuer  | `test-pat.issuer.cloudflare.com` | Development token issuance environment - Use for internal development, integration testing, and end-to-end validation. Cloudflare recommends the Go, Rust, and TypeScript implementations of RFC 9578, and provides a [test website](https://pepe-debug.research.cloudflare.com/) to test your attester against. |
+| Dev Privacy Proxy | `test-proxy.cloudflare.com`    | Development proxy environment – This is subject to change and Cloudflare recommends making this configuration dynamic to support multiple environments, including canary releases and internal employee testing. |
+
+</table-wrap>
+
+:::note
+
+Any load testing needs to be communicated to Cloudflare in advance, regardless of environment. Both environments run on the Cloudlfare global production edge network and do not differentiate on network topology or prioritization.
+
+:::
+
+### Proxy authentication
+
+The Privacy Proxy Ingress service authenticates to clients using standard WebPKI-based X.509 certificates in TLS, with a certificate rooted in DigiCert.
+
+## Privacy API authentication
+
+The Privacy API relies on a long-lived (tentatively: 3 years) root Certificate Authority (CA) for authentication.
+
+## Token validation
+
+The keys responsible for signing privacy access tokens (PATs) are rotated weekly, with privacy access tokens accepted for two (2) weeks. Privacy access tokens are signed by the currently active root certificate and thus have an upper bound lifetime of two (2) weeks.
+
+## Regional validation
+
+The ingress service can reject clients from unsupported countries based on configuration supplied by the customer. This prevents clients obtaining a token from a valid region and/or ingressing via an invalid region.
+
+Clients will be rejected with an error at the HTTP layer when they attempt to request a token and/or authenticate with an existing token.
+
+Specifically:
+
+- A HTTP `403 (Forbidden)` will be returned in both cases.
+- A `code` field with the HTTP status code returned (matching the HTTP response status code).
+- A static "reason" of `UNSUPPORTED_COUNTRY`.
+- The detected client country as an [ISO-3166-2](https://www.iso.org/standard/63546.html) code to allow for client-side logging by the Privacy Proxy client.
+
+The response body is a JSON object:
+
+```sh
+
+{
+  "code": 403,
+  "reason": “UNSUPPORTED_COUNTRY”,
+  "client_country”: <ISO-3166-2 country code>
+}
+
+```
+
+Identification of client country will be based on the geo-located IP of the connecting client against the MaxMind GeoIP2 & Anonymous IP database.
+
+Clients who attempt to mask their true location by stacking proxies/VPNs are not actively prevented from using Privacy Proxy. The Privacy Proxy assumes the client IP is the real IP of the client.
+
+## Tunnel establishment
+
+Clients establish a tunnel by:
+
+1. Connecting to the Privacy Proxy Ingress service.
+2. Presenting a valid PAT alongside a CONNECT or CONNECT-UDP request.
+
+The following section describes how these tunnels and subsequent CONNECT requests are made.
+
+### CONNECT Requests
+
+The first CONNECT request in a newly established tunnel must provide a PAT. Until a PAT has been presented, each CONNECT request fails with a HTTP `401` error. Details about authenticating with a PAT are in [client authentication](#client-authentication).
+
+- Each CONNECT request can identify a target either by name or IP address.
+- In the case of a name, Cloudflare's DNS Resolver service will be queried to map the name to an IP address.
+- In the case of an IP address, the IP address provided will be used to establish the upstream transport connection.
+
+It is recommended that only CONNECT requests be sent over HTTP/1.1 or HTTP/2 connections to the Privacy Proxy. Requests for other HTTP methods may be rejected with a HTTP `405 (Method Not Allowed)` response by the Privacy Proxy. Specifically, CONNECT-UDP requests are not supported and will be rejected with a HTTP `405 (Method Not Allowed)` response by the proxy.
+
+### Client authentication
+
+Clients are required to authenticate themselves to use a Privacy Proxy tunnel for establishing upstream origin requests. Authentication is done with a private access token (PAT). PATs are conveyed from client to proxy with the `Proxy-Authorization` header with an authentication scheme corresponding to the type of PAT.
+
+There are two types of PATs:
+
+1. PrivacyToken: PATs issued by the Token Issuer and constructed according to the [draft specification](https://datatracker.ietf.org/doc/html/draft-privacy-token-00).
+2. PresharedToken: PATs consisting of a pre-shared key shared between trusted clients and the proxy. This type of PAT must not be used in production, and should only be used for experimental testing and interop purposes.
+
+PrivacyToken PATs can be single-use or multi-use, depending on the quota management mechanism. The Token Validator service implements a double spend prevention registry to prevent fraud and abuse from token reuse for single-use PATs. Spending such a token more than once will yield a `401` error for a CONNECT request.
+
+Once a single tunnel CONNECT request is successfully authenticated, resulting in a `200` response, clients are not required to send PATs for future CONNECT requests in that tunnel. This means that clients spend one PAT per tunnel. Depending on the quota management mechanism, additional metrics may be tracked alongside the PAT for server-side bandwidth limit enforcement.
+
+Keys used to verify PATs rotate once a week (epoch). At any given point in time, the proxy will accept tokens under the current epoch and previous epoch. This means that tokens issued and used after two epoch rotations will fail to verify.
+
+## Egress IP management
+
+The Egress Selection service uses the client IP address to select an egress IP address that roughly approximates that of the client. Clients do not have control over which egress IP address is used.
+
+The set of egress IP addresses for different Privacy Proxy client providers is shared. That is, IP addresses used by one set of clients are shared with those used by other clients. This means IP reputation issues caused by one client can impact other clients.
+
+## Quota management
+
+The Privacy Proxy service has three mechanisms for enforcing quota limitations, described below.
+
+1. Single-use PATs with unlimited bandwidth. Clients SHOULD rotate these PATs to prevent long-term linkability to individual clients. Additional quota management, such as limiting the number of tokens available to each client, must be enforced by the client provider. The Privacy Proxy does not track any metrics associated with individual tokens, such as the number of CONNECT requests or total consumed bandwidth, but may do so in the future for more fine-grained client reporting.
+2. Single-use PATs with limited bandwidth per PAT. For these PATs, when the bandwidth limit is reached during the context of a single tunnel, the Privacy Proxy will send a `Proxy-Authenticate` HTTP header requesting an additional token. New CONNECT requests will be rejected until a new, unspent token is provided. The Privacy Proxy will not terminate or interrupt connections that exceed this bandwidth limit unless requested to do so by the client provider.
+3. Multi-use PATs with limited bandwidth tracked alongside the token. These PATs have two bandwidth limits: a soft limit and hard limit. When the soft limit is reached, the proxy will return a HTTP header on CONNECT responses indicating that the limit has been exceeded. When the hard limit is reached, the tunnel corresponding to the PAT will be torn down, and the PAT will not be spendable for future tunnels.
+
+## Logging and operational metrics
+
+The Privacy Proxy service does not log any individual client connection details, such as target origins. Privacy Proxy does log error and other exceptional behavior for the purpose of diagnosing issues in production. Privacy Proxy will also log aggregate metrics, including, but not limited to:
+
+1. Average number of connections per tunnel.
+2. Average throughput of connections per tunnel.
+3. Average end-to-end tunnel establishment time.
+4. Average number of unspent tokens.
+
+For multi-use PATs, Privacy Proxy will track bandwidth utilization until the PAT has reached its limit. No information beyond that which is necessary for accounting is recorded.
+
+## Experimental onboarding
+
+The process for onboarding a new client into the Privacy Proxy service consists of the following:
+
+1. Allocating a PresharedToken PAT for test devices that is known only to the client provider and Cloudflare. The PreSharedToken PAT is not associated with any production egress IP address. The PreSharedToken PAT is allocated and distributed out-of-band between Cloudflare and the client provider.
+2. Configuring control plane mutual TLS authentication for PrivacyToken issuance. Refer to [Appendix A. Control API](#appendix-a-control-api) for more details about this API.
+
+To test that the PAT is configured correctly, clients can run the following test cURL command:
+
+```sh
+$ export TEST_PAT=...
+$ curl -v --http2 --proxy-header "Proxy-Authorization: Preshared
+${TEST_PAT}" -x https://cp6.cloudflare.com:443
+https://www.cloudflare.com/cdn-cgi/trace
+```
+
+The output should look like:
+
+```sh
+fl=4f534
+h=www.cloudflare.com
+ip=...
+ts=1626717524.191
+visit_scheme=https
+uag=curl/7.64.1
+colo=...
+http=http/2
+loc=US
+tls=TLSv1.2
+sni=plaintext
+warp=off
+gateway=off
+```
+
+## Appendix A. Control API
+
+This section describes the Control API available to clients.
+
+- There are two environments available (refer to [Environments](#environments), above).
+- The Control API is currently only accessible with mutual TLS authentication.
+- The process for adding new clients is manual and configured out of band.
+
+All resources obtained via `GET` will have [cache control directives](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) on them that control caching properties.
+
+### `GET /api/v2/token-configs?region=_auto
+X-Forwarded-For: 1.2.3.4`
+
+This `GET` request gets the token configuration for a region.
+
+- In this case, you want the API to select the region automatically, so you must also include the `X-Forwarded-For` HTTP request header including the client IP for handling the region lookup.
+- The `_auto` region indicates that the Privacy Proxy should use the IP address in the `X-Forwarded-For` HTTP request header for region selection.
+
+:::note
+
+As of 2021-11-11 and during development, the `_auto` region will always default to US West for egress.
+
+:::
+
+- This request may specify the desired quota management policy in an HTTP header, `Sec-Quota-Policy`, which is an integer value of either `1`, `2`, or `3` for single-use unlimited bandwidth, single-use limited bandwidth, and multi-use limited bandwidth, respectively.
+
+The response is a JSON object:
+
+```sh
+{
+ "rsabssa-4096": {
+   // data here is for an older token version and can be ignored.
+   ..
+  },
+  "rsabpss-4096": { // token_version, which specifies the token format/version. This version is the current one.
+    "batch_limit": 30,
+    "token_config": {
+      "token_key": "MII…<base64 encoded key>"
+    }
+  }
+}
+```
+- `token_key` is (for RSA) a Subject Public Key Info value encoded as a base 64 string.
+- `token_version` indicates under which protocol those token keys should be used.
+- `batch_limit` indicates the maximum number of issuance requests in a batch.
+- `quota_policy` is a string indicating the quota management policy for the given token, indicated by an integer value. If empty or absent, the policy is single-use, unlimited bandwidth.
+
+### `POST /api/v1/issue-request`
+
+Request body is a JSON object:
+
+```sh
+{
+  "requests": [<IssuanceRequest>],
+  "key_id": <key_id>,
+  "token_version": <version_str>
+}
+```
+
+- `requests` field is a list of byte arrays for signing, which are encoded into base 64 strings. Each request is the output of the [corresponding client blind signature operation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-rsa-blind-signatures#section-5.1.1).
+- `key_id` is a 32-byte key ID that identifies the key used to produce the signature (details are at https://tfpauly.github.io/privacy-proxy/draft-privacy-token.html). `key_id` is generated as SHA256(`token_key`). `key_id` is used by the server to determine which token key the client is using.
+
+Example:
+
+```sh
+{
+  "token_version": <version_str>,
+  "requests": ["<base_64_str_1>", "<base_64_str_2>"],
+  "key_id": "<base_64_str>"
+}
+```
+
+If `key_id` is valid, the response body is a JSON object:
+
+```sh
+{
+  "responses": [<IssuanceResponse>],
+  "expires": <expiry_timestamp>
+}
+```
+
+- `responses` field is a list of signed byte arrays, which are encoded into base 64 strings, where each response is mapped to a blind signature using the [corresponding blind signature finalization operation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-rsa-blind-signatures#section-5.1.3).
+- `expiry_timestamp` is a long value indicating the tokens are valid until which timestamp.
+
+Example:
+
+```sh
+{
+  "responses": ["<base_64_str_1>", "<base_64_str_2>"],
+  "expires": <expiry_timestamp_long>
+}
+```
+
+If `key_id` is invalid, the response status code is `404`.
+
+If one of the strings in the `requests` field is not correctly encoded base 64 string, the response status code is `400`.
+
