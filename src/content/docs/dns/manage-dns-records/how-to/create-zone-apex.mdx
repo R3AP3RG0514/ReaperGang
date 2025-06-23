@@ -1,0 +1,36 @@
+---
+pcx_content_type: reference
+title: Create zone apex record
+sidebar:
+  order: 2
+
+---
+
+import { Example, Render } from "~/components"
+
+When you add a domain to Cloudflare, you may also need to create a DNS record on your zone apex (`example.com`).
+
+To do this, create an [IP address resolution record](/dns/manage-dns-records/reference/dns-record-types/#ip-address-resolution) (`A`, `AAAA`, or `CNAME`) using `@` for the **Name**, as in the following example.
+
+<Example>
+
+| Type | Name | IPv4 address | Proxy status |
+| ---- | ---- | ------------ | ------------ |
+| A    | `@`  | `192.0.2.1`  | Proxied      |
+
+</Example>
+
+<Render file="dns-record-steps" product="dns" params={{
+    name: "your zone apex",
+		example: "@"
+}} />
+
+## Domain redirects
+
+Once you create a domain, you may want to route that traffic to other places.
+
+For more guidance, refer to [Redirect domain to subdomain](/fundamentals/setup/manage-domains/manage-subdomains/#redirect-the-apex-domain-to-a-subdomain) or [Redirect one domain to another](/fundamentals/setup/manage-domains/redirect-domain/).
+
+## Get free SSL certificates
+
+Cloudflare offers free, unshared, publicy trusted [Universal SSL certificates](/ssl/edge-certificates/universal-ssl/) to all Cloudflare domains.
