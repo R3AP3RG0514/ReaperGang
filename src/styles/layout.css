@@ -1,0 +1,17 @@
+/* Remove vertical padding and border between panels */
+.content-panel {
+	padding-top: 1.5rem !important;
+	padding-left: var(--sl-content-pad-x) !important;
+	padding-right: var(--sl-content-pad-x) !important;
+	padding-bottom: 0 !important;
+
+	& + & {
+		border-top: initial !important;
+		padding-top: 0rem !important;
+	}
+
+	/* Remove h1 top margin from title */
+	#_top {
+		margin-top: initial !important;
+	}
+}
