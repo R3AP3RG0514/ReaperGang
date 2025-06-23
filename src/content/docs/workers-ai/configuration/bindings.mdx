@@ -1,0 +1,113 @@
+---
+pcx_content_type: configuration
+title: Workers Bindings
+sidebar:
+  order: 1
+---
+
+import { Type, MetaInfo } from "~/components";
+
+## Workers
+
+[Workers](/workers/) provides a serverless execution environment that allows you to create new applications or augment existing ones.
+
+To use Workers AI with Workers, you must create a Workers AI [binding](/workers/runtime-apis/bindings/). Bindings allow your Workers to interact with resources, like Workers AI, on the Cloudflare Developer Platform. You create bindings on the Cloudflare dashboard or by updating your [`wrangler.toml` file](/workers/wrangler/configuration/).
+
+To bind Workers AI to your Worker, add the following to the end of your `wrangler.toml` file:
+
+import { WranglerConfig } from "~/components";
+
+<WranglerConfig>
+
+```toml
+[ai]
+binding = "AI" # i.e. available in your Worker on env.AI
+```
+
+</WranglerConfig>
+
+## Pages Functions
+
+[Pages Functions](/pages/functions/) allow you to build full-stack applications with Cloudflare Pages by executing code on the Cloudflare network. Functions are Workers under the hood.
+
+To configure a Workers AI binding in your Pages Function, you must use the Cloudflare dashboard. Refer to [Workers AI bindings](/pages/functions/bindings/#workers-ai) for instructions.
+
+## Methods
+
+### async env.AI.run()
+
+`async env.AI.run()` runs a model. Takes a model as the first parameter, and an object as the second parameter.
+
+```javascript
+const answer = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+	prompt: "What is the origin of the phrase 'Hello, World'",
+});
+```
+
+```javascript
+const answer = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+	prompt: "What is the origin of the phrase 'Hello, World'",
+	stream: true,
+});
+
+return new Response(answer, {
+	headers: { "content-type": "text/event-stream" },
+});
+```
+
+**Parameters**
+
+- `model` <Type text="string" /> <MetaInfo text="required" />
+
+  - The model to run.
+
+  **Supported options**
+
+  - `prompt` <Type text="string" /> <MetaInfo text="optional" />
+    - Text prompt for the text-generation (maxLength: 131072, minLength: 1).
+  - `raw` <Type text="boolean" /> <MetaInfo text="optional" />
+    - If true, a chat template is not applied and you must adhere to the specific model's expected formatting.
+  - `stream` <Type text="boolean" /> <MetaInfo text="optional" />
+    - If true, the response will be streamed back incrementally using SSE, Server Sent Events.
+  - `max_tokens` <Type text="number" /> <MetaInfo text="optional" />
+    - The maximum number of tokens to generate in the response.
+  - `temperature` <Type text="number" /> <MetaInfo text="optional" />
+    - Controls the randomness of the output; higher values produce more random results (maximum: 5, minimum: 0).
+  - `top_p` <Type text="number" /> <MetaInfo text="optional" />
+    - Adjusts the creativity of the AI's responses by controlling how many possible words it considers. Lower values make outputs more predictable; higher values allow for more varied and creative responses (maximum: 2, minimum: 0).
+  - `top_k` <Type text="number" /> <MetaInfo text="optional" />
+    - Limits the AI to choose from the top 'k' most probable words. Lower values make responses more focused; higher values introduce more variety and potential surprises (maximum: 50, minimum: 1).
+  - `seed` <Type text="number" /> <MetaInfo text="optional" />
+    - Random seed for reproducibility of the generation (maximum: 9999999999, minimum: 1).
+  - `repetition_penalty` <Type text="number" /> <MetaInfo text="optional" />
+    - Penalty for repeated tokens; higher values discourage repetition (maximum: 2, minimum: 0).
+  - `frequency_penalty` <Type text="number" /> <MetaInfo text="optional" />
+    - Decreases the likelihood of the model repeating the same lines verbatim (maximum: 2, minimum: 0).
+  - `presence_penalty` <Type text="number" /> <MetaInfo text="optional" />
+    - Increases the likelihood of the model introducing new topics (maximum: 2, minimum: 0).
+  - `messages` <Type text="{
+      role: &quot;user&quot; | &quot;assistant&quot; | &quot;system&quot; | &quot;tool&quot; | (string & NonNullable<unknown>);
+      content: string;
+      name?: string;
+    }[]" /> <MetaInfo text="optional" /> \* An array of message objects representing the conversation history.
+  - `tools` <Type text="{
+      type: &quot;function&quot; | (string & NonNullable<unknown>);
+      function: {
+        name: string;
+        description: string;
+        parameters?: {
+          type: &quot;object&quot; | (string & NonNullable<unknown>);
+          properties: {
+            [key: string]: {
+              type: string;
+              description?: string;
+            };
+          };
+          required: string[];
+        };
+      };
+    }[]" /> <MetaInfo text="optional" /> \* A list of tools available for the assistant to use.
+  - `functions` <Type text="{
+      name: string;
+      code: string;
+    }[]" /> <MetaInfo text="optional" /> \* A list of functions available for the assistant to use.
