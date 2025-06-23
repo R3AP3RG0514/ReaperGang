@@ -1,0 +1,9 @@
+:root {
+	/* Reduce heading sizes from Starlight defaults */
+	--sl-text-h1: 2.25rem;      /* 32px - for main titles */
+	--sl-text-h2: 1.5rem;    /* 24px - for major sections */
+	--sl-text-h3: 1.25rem;   /* 20px - for subsections */
+	--sl-text-h4: 1.125rem;  /* 18px - for smaller sections */
+	--sl-text-h5: 1rem;      /* 16px - same as base text */
+	--sl-text-h6: 0.875rem;  /* 14px - smallest heading */
+}
