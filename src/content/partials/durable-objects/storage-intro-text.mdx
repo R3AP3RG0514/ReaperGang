@@ -1,0 +1,10 @@
+---
+{}
+---
+
+The Durable Object Storage API comes with several methods, including key-value (KV) API, SQL API, and point-in-time-recovery (PITR) API.
+
+- Durable Object classes with the default, [SQLite storage backend](/durable-objects/features/access-durable-objects-storage/#sqlite-storage-backend) can use KV API, SQL API, and PITR API. KV API methods like `get()`, `put()`, `delete()`, or `list()` store data in a hidden SQLite table.
+- Durable Object classes with the key-value storage backend can use KV API.
+
+Each method is implicitly wrapped inside a transaction, such that its results are atomic and isolated from all other storage operations, even when accessing multiple key-value pairs.
