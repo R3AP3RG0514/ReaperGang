@@ -1,0 +1,32 @@
+---
+import { z } from "astro:schema";
+import { Badge } from "@astrojs/starlight/components";
+import { tagsValues } from "~/schemas/tags";
+
+type Props = z.infer<typeof props>;
+
+const props = z.object({
+	tags: z.array(z.string()).transform((tags) => {
+		if (tags) {
+			// Only keep values that are in tagsValues
+			return tags.filter((tag) => tagsValues.includes(tag));
+		}
+		return [];
+	}),
+});
+
+const { tags } = props.parse(Astro.props);
+---
+
+{
+	tags && tags?.length > 0 && (
+		<div class="flex flex-row gap-2">
+			<strong>Page tags:</strong>
+			{tags.map((tag) => (
+				<a href={`/search/?tag=${tag}`} class="no-underline">
+					<Badge text={tag} />
+				</a>
+			))}
+		</div>
+	)
+}
