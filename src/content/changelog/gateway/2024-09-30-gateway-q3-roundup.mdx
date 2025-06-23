@@ -1,0 +1,19 @@
+---
+title: Gateway - Q3/2024 roundup
+description: Q3/2024 roundup for Gateway changelogs.
+date: 2024-09-30T00:00:00.000Z
+products:
+- gateway
+---
+
+### 2024-09-30 - File sandboxing
+
+Gateway users on Enterprise plans can create HTTP policies with [file sandboxing](/cloudflare-one/policies/gateway/http-policies/file-sandboxing/) to quarantine previously unseen files downloaded by your users and scan them for malware.
+
+### 2024-07-30 - UK NCSC indicator feed publicly available in Gateway
+
+Gateway users on any plan can now use the [PDNS threat intelligence feed](/security-center/indicator-feeds/#publicly-available-feeds) provided by the UK National Cyber Security Centre (NCSC) in DNS policies.
+
+### 2024-07-14 - Gateway DNS filter non-authenticated queries
+
+Gateway users can now select which endpoints to use for a given DNS location. Available endpoints include IPv4, IPv6, DNS over HTTPS (DoH), and DNS over TLS (DoT). Users can protect each configured endpoint by specifying allowed source networks. Additionally, for the DoH endpoint, users can filter  traffic based on source networks and/or authenticate user identity tokens.

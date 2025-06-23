@@ -1,0 +1,19 @@
+---
+title: Cloudflare Tunnel - Q4/2024 roundup
+description: Q4/2024 roundup for Cloudflare Tunnel changelogs.
+date: 2024-12-19T00:00:00.000Z
+products:
+- tunnel
+---
+
+### 2024-12-19 - Tunnel diagnostic logs
+
+The latest `cloudflared` build [2024.12.2](https://github.com/cloudflare/cloudflared/releases/tag/2024.12.2) introduces the ability to collect all the diagnostic logs needed to troubleshoot a `cloudflared` instance. For more information, refer to [Diagnostic logs](/cloudflare-one/connections/connect-networks/troubleshoot-tunnels/diag-logs/).
+
+### 2024-10-17 - Simplifed WARP Connector deployment
+
+You can now deploy WARP Connector using a simplified, guided workflow similar to `cloudflared` connectors. For detailed instructions, refer to the [WARP Connector documentation](/cloudflare-one/connections/connect-networks/private-net/warp-connector/).
+
+### 2024-10-10 - Bugfix for --grace-period
+
+The new `cloudflared` build [2024.10.0](https://github.com/cloudflare/cloudflared/releases/tag/2024.10.0) has a bugfix related to the [--grace-period](/cloudflare-one/connections/connect-networks/configure-tunnels/tunnel-run-parameters/#grace-period) tunnel run parameter. `cloudflared` connectors will now abide by the specified waiting period before forcefully closing connections to Cloudflare's network.

@@ -1,0 +1,15 @@
+---
+title: DLP - Q4/2024 roundup
+description: Q4/2024 roundup for DLP changelogs.
+date: 2024-11-25T00:00:00.000Z
+products:
+- dlp
+---
+
+### 2024-11-25 - Profile confidence levels
+
+DLP profiles now support setting a [confidence level](/cloudflare-one/policies/data-loss-prevention/dlp-profiles/advanced-settings/#confidence-levels) to choose how tolerant its detections are to false positives based on the context of the detection. The higher a profile's confidence level is, the less false positives will be allowed. Confidence levels include Low, Medium, or High. DLP profile confidence levels supersede [context analysis](/cloudflare-one/policies/data-loss-prevention/dlp-profiles/advanced-settings/#context-analysis).
+
+### 2024-11-01 - Send entire HTTP requests to a Logpush destination
+
+In addition to [logging the payload](/cloudflare-one/policies/data-loss-prevention/dlp-policies/logging-options/#log-the-payload-of-matched-rules) from HTTP requests that matched a DLP policy in Cloudflare Logs, Enterprise users can now configure a [Logpush job](/cloudflare-one/policies/data-loss-prevention/dlp-policies/logging-options/#send-http-requests-to-logpush-destination) to send the entire HTTP request that triggered a DLP match to a storage destination. This allows long-term storage of full requests for use in forensic investigation.
