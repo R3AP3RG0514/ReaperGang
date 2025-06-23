@@ -1,0 +1,15 @@
+---
+title: "Custom Errors (beta): Stored Assets & Account-level Rules"
+description: Cloudflare introduces Custom Errors (beta), building on Custom Error Responses with new asset storage capabilities
+products:
+  - rules
+date: 2025-02-11T11:00:00Z
+---
+
+Cloudflare introduces [Custom Errors](/rules/custom-errors/) (beta), building on Custom Error Responses with new asset storage capabilities. This update allows users to store externally hosted error pages at Cloudflare edge and reference them in custom error rules, eliminating the need to supply inline content.
+
+New capabilities:
+
+
+
+[image](~/assets/images/changelog-next/2024-02-03-terraform-v5-screenshot.png)
