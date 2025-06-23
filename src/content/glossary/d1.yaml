@@ -1,0 +1,14 @@
+---
+productName: D1
+entries:
+  - term: index
+    general_definition: |-
+      a data structure which improves the efficiency of data retrieval from a table. Writing to a column referenced in an index adds at least (1) more row to rows written (as the index needs to be updated too), but this is offset by the benefit in the reduction of rows read.
+
+  - term: SQLite
+    general_definition: |-
+      a lightweight, embedded database engine. It is a specific implementation of a relational database management system (RDBMS). SQLite uses SQL as its query language.
+
+  - term: Workers binding
+    general_definition: |-
+      a feature which allows a Cloudflare Worker to interact with resources on the Cloudflare Developer Platform. Refer to [What is a binding?](/workers/runtime-apis/bindings/#what-is-a-binding).
