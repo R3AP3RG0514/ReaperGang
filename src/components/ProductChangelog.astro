@@ -1,0 +1,91 @@
+---
+import { getEntry } from "astro:content";
+
+import AnchorHeading from "~/components/AnchorHeading.astro";
+import { getChangelogs, type Filter } from "~/util/changelogs";
+
+const page = await getEntry("docs", Astro.params.slug!);
+
+if (!page) {
+	throw new Error(
+		`[ProductChangelog] Failed to find entry for ${Astro.params.slug}.`,
+	);
+}
+
+if (!page.data.changelog_file_name && !page.data.changelog_product_area_name) {
+	throw new Error(
+		`[ProductChangelog] ${Astro.params.slug} does not have a 'changelog_file_name' or 'changelog_product_area_name' frontmatter property.`,
+	);
+}
+
+if (page.data.changelog_file_name && page.data.changelog_file_name.length > 1) {
+	throw new Error(
+		`[ProductChangelog] This component cannot be used on files that have more than 1 entry in their 'changelog_file_name' frontmatter property.`,
+	);
+}
+
+let filter: Filter;
+
+if (page.data.changelog_product_area_name) {
+	filter = (entry) => {
+		return entry.data.productArea === page.data.changelog_product_area_name;
+	};
+} else {
+	filter = (entry) => {
+		return entry.id === page.data.changelog_file_name![0];
+	};
+}
+
+const changelogs = await getChangelogs({
+	filter,
+	locals: Astro.locals,
+});
+
+if (!changelogs) {
+	throw new Error(
+		`[ProductChangelog] Failed to find changelogs for ${page.data.changelog_product_area_name} or ${page.data.changelog_file_name}.`,
+	);
+}
+
+const grouped = Object.entries(
+	Object.groupBy(changelogs, (entry) => entry.date),
+)
+	.sort()
+	.reverse();
+---
+
+{
+	page.data.pcx_content_type === "changelog" && (
+		<p>
+			<a href={`/${page.id}/index.xml`} target="_blank">
+				Subscribe to RSS
+			</a>
+		</p>
+	)
+}
+{
+	grouped.map(([date, entries]) => (
+		<div>
+			{(entries ?? []).map(async (entry) => {
+				let shouldRenderTitle = true;
+
+				if (entry.title.startsWith(`${entry.product.name} - `)) {
+					shouldRenderTitle = false;
+				}
+
+				return (
+					<div>
+						<AnchorHeading depth={2} title={date} />
+						{page.data.changelog_product_area_name && (
+							<h3 class="!mt-4">
+								<a href={entry.product.link}>{entry.product.name}</a>
+							</h3>
+						)}
+						{shouldRenderTitle && <strong>{entry.title}</strong>}
+						<Fragment set:html={entry.content} />
+					</div>
+				);
+			})}
+		</div>
+	))
+}

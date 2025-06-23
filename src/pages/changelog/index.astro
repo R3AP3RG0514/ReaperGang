@@ -1,0 +1,23 @@
+---
+import type { StarlightPageProps } from "@astrojs/starlight/props";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+import { getChangelogs } from "~/util/changelogs";
+import Changelogs from "~/components/Changelogs.tsx";
+
+const changelogs = await getChangelogs({
+	filter: (entry) => entry.id !== "api-deprecations",
+	locals: Astro.locals,
+});
+
+const props = {
+	frontmatter: {
+		title: "Cloudflare Product Changelogs",
+		template: "splash",
+	},
+} as StarlightPageProps;
+---
+
+<StarlightPage {...props}>
+	<Changelogs changelogs={changelogs} client:load />
+</StarlightPage>
