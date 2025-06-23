@@ -1,0 +1,88 @@
+---
+title: Streaming
+pcx_content_type: get-started
+sidebar:
+  order: 4
+---
+
+Streaming allows you to receive partial responses from Workers AI's text generation models in real-time using **Server-Sent Events (SSE)**. By enabling streaming, you can improve user experiences in applications that rely on immediate feedback, such as chatbots or live content generation.
+
+To enable streaming on Workers AI, set the `stream` parameter to `true` in your request. This changes the response format and MIME type to `text/event-stream`, allowing tokens to be sent incrementally.
+
+## Examples
+
+### Using streaming with REST API
+
+Here's an example of enabling streaming with Workers AI using REST API:
+
+```bash
+curl -X POST \
+"https://api.cloudflare.com/client/v4/accounts/<account>/ai/run/@cf/meta/llama-2-7b-chat-int8" \
+-H "Authorization: Bearer <token>" \
+-H "Content-Type:application/json" \
+-d '{ "prompt": "where is new york?", "stream": true }'
+```
+
+**Response:**
+
+```plaintext
+data: {"response":"New"}
+
+data: {"response":" York"}
+
+data: {"response":" is"}
+
+data: {"response":" located"}
+
+data: {"response":" in"}
+
+data: {"response":" the"}
+
+...
+
+data: [DONE]
+```
+
+The `data: [DONE]` signal indicates the end of the stream.
+
+### Streaming in a Worker Script
+
+You can also use streaming directly within a Cloudflare Worker:
+
+```javascript
+import { Ai } from "@cloudflare/ai";
+
+export default {
+	async fetch(request, env, ctx) {
+		const ai = new Ai(env.AI, { sessionOptions: { ctx: ctx } });
+		const stream = await ai.run("@cf/meta/llama-2-7b-chat-int8", {
+			prompt: "where is new york?",
+			stream: true,
+		});
+		return new Response(stream, {
+			headers: { "content-type": "text/event-stream" },
+		});
+	},
+};
+```
+
+### Client-side: Consuming the event stream
+
+If you want to consume the streamed output in a browser, you can use the following JavaScript code with an HTML page or a frontend framework, such as React or Vue, for example:
+
+```javascript
+const source = new EventSource("/worker-endpoint");
+
+source.onmessage = (event) => {
+	if (event.data === "[DONE]") {
+		// Close the connection to prevent automatic reconnection
+		source.close();
+		return;
+	}
+
+	const data = JSON.parse(event.data);
+	document.getElementById("output").innerHTML += data.response;
+};
+```
+
+The above code can be easily integrated into simple HTML pages or complex SPAs using frameworks like React, Angular, or Vue. For example, in React, you can manage the `EventSource` connection in a `useEffect` hook and update the state incrementally as data is streamed.
